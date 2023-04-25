@@ -1,0 +1,945 @@
+
+async function ProcUnidadA(Url, CodUnidad, PadronUnidad, PlacaUnidad, CodRuta, CodDispositivo, CodSalidaProgramada,
+                     CodRecorrido, FechaHoraProgramada, NroServicio, CodPersonaPropietario, CodConsorcio,
+                     CodEstado, MotivoAnulacion, CodEstadoUnidad, LadoActual, IdUnidadGPS, Latitud, Longitud,
+                     Velocidad, FechaHoraPaso, Precision, NivelBateria, CodUsuario, Auxiliar, Indice, subIndice) {
+    Data = {
+        CodUnidad: CodUnidad,
+        PadronUnidad: PadronUnidad,
+        PlacaUnidad: PlacaUnidad,
+        CodRuta: CodRuta,
+        CodDispositivo: CodDispositivo,
+        CodSalidaProgramada: CodSalidaProgramada,
+        CodRecorrido: CodRecorrido,
+        FechaHoraProgramada: FechaHoraProgramada,
+        NroServicio: NroServicio,
+        CodPersonaPropietario: CodPersonaPropietario,
+        CodConsorcio: CodConsorcio,
+        CodEstado: CodEstado,
+        MotivoAnulacion: MotivoAnulacion,
+        CodEstadoUnidad: CodEstadoUnidad,
+        LadoActual: LadoActual,
+        IdUnidadGPS: IdUnidadGPS,
+        Latitud: Latitud,
+        Longitud: Longitud,
+        Velocidad: Velocidad,
+        FechaHoraPaso: FechaHoraPaso,
+        Precision: Precision,
+        NivelBateria: NivelBateria,
+        CodSesion: CodUsuario,
+        Auxiliar: Auxiliar,
+        Indice: Indice
+    };
+
+    await $.post(Url, Data, function (Datos) {
+        
+        if (Indice == 10) {
+ 
+            if (subIndice == 2) { //reporteboleto/inicio
+                    $('#selectUnidad').empty();
+                $.each(Datos, function (i){
+                    //if (codruta == this.Codigo){
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    //}
+                });
+                return;
+            }
+            else if (subIndice == 3) {
+                $('#selectUnidadRP89').empty();
+                $.each(Datos, function (i) {
+                    $('#selectUnidadRP89').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                });
+                $('#selectUnidadRP89').append('<option selected value="' + 0 + '"> ' + "--Todos--" + '</option>')
+                return;
+            }
+            else if (subIndice == 4) {
+                
+                $('#selecUnidad').empty();
+                $.each(Datos, function (i) {
+                    if (Number(CodRuta) == Number(this.Codigo))
+                    {
+                        $('#selecUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    } else if (CodRuta == 0) {
+                        $('#selecUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#selecUnidad').append('<option value="' + 0 + '" selected > ' + '------- Todos -------' + '</option>')
+
+                cargarReporteAperturaConductor($('#selecUnidad').val(), $('#txtFechaInicio').val(), $('#selectRuta').val());
+                return;
+            }
+            else if (subIndice == 5) {
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    if (CodRuta == this.Codigo){
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                //alert($('#selectUnidad').val());
+                
+                cargarSelectPersonasConApertura($('#selectUnidad').val(), $('#txtFecha').val());
+                return;
+            }
+            else if (subIndice == 6) { // para el RP 95
+                $('#selectUnidadRP95').empty();
+                $.each(Datos, function (i) {
+                    //if (CodRuta == this.Codigo) {
+                        $('#selectUnidadRP95').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    //}
+                });
+                $('#selectUnidadRP95').append('<option value="0" selected >--Todos--</option>');
+                
+                $("#selectUnidadRP95").select2({
+                    theme: "classic"
+                });
+
+                return;
+            }
+            else if (subIndice == 7) { // RP 95
+                $('#selectUnidadRP95').empty();
+                $.each(Datos, function (i) {
+                    if (CodRuta == this.Codigo) {
+                        $('#selectUnidadRP95').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                    if (CodRuta == 0) {
+                        $('#selectUnidadRP95').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#selectUnidadRP95').append('<option value="0" selected >--Todos--</option>');
+                return;
+            }
+            else if (subIndice == 8) {
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    if (CodRuta == this.Codigo) {
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                    if (CodRuta == 0) {
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#selectUnidad').append('<option value="0" selected >--Todos--</option>');
+                return;
+            }
+            else if (subIndice == 9) {
+
+                var jsonAutocompletePlaca = [];
+
+                $.each(Datos,function(){
+                    jsonAutocompletePlaca.push({
+                        "label": '['+ this.PadronUnidad + '] - ' +this.PlacaUnidad,
+                        "codUnidad": this.CodUnidad,
+                    });
+
+                });
+
+                $("#txtBuscarUsuarioUnidad").autocomplete({
+                    source: jsonAutocompletePlaca,
+                    select: function (event, ui) {
+                        cargarTablaPorApertura(ui.item.codUnidad);
+                        $('#txtNroPlaca').text(ui.item.label);
+                    }
+                });
+
+                return;
+            }
+            else if (subIndice == 10) { // autocomplete para BoletoTransaccionReporte/ReproductorTransaccion
+
+                return;
+            }
+            else if (subIndice == 11) {
+                jsonResultUnidad = Datos;
+                $.each(Datos, function (i) {
+                    //if (i < 3) {
+                        arregloConsultaPlacas.push((this.PlacaUnidad).replace('-', ''));
+                    //}
+                });
+                //arregloConsultaPlacas = [];
+                //arregloConsultaPlacas.push('A9Z749');
+                //arregloConsultaPlacas.push('AUR709');
+                llenar_Json(arregloConsultaPlacas);
+                return;
+            }
+            else if (subIndice == 12) {
+                jsonDataUnidad = Datos;
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    if (Number($('#selectRuta').val()) == Number(this.Codigo)) {
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                return;
+            }
+            else if (subIndice == 13) {
+                jsonDataUnidad = Datos;
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    if (Number($('#selectRuta').val()) == Number(this.Codigo)) {
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                    if (Number($('#selectRuta').val()) == Number(0)) {
+                        $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#selectUnidad').select2({
+                    theme: "classic"
+                });
+                ListaConductoresPorUnidad($('#selectUnidad').val(), $('#txtFechaConsultaLiquidacion').val());
+                return;
+            }
+            else if (subIndice == 14) {
+
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    //if (CodRuta == this.Codigo) {
+                    $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    //}
+                });
+                $('#selectUnidad').append('<option value="0" selected >--Todos--</option>');
+
+                $("#selectUnidad").select2({
+                    theme: "classic"
+                });
+
+                ProcesarMatriz($('#selectUnidad').val());
+                return;
+            }
+            else if (subIndice == 15) {
+                $('#selectUnidad').empty();
+                $.each(Datos, function (i) {
+                    //if (CodRuta == this.Codigo) {
+                    $('#selectUnidad').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    //}
+                });
+                $('#selectUnidad').append('<option value="0" selected >--Todos--</option>');
+
+                $("#selectUnidad").select2({
+                    theme: "classic"
+                });
+                ProcesarMatriz($('#selectUnidad').val());
+                return;
+            }
+            else if (subIndice == 16) {
+                $('#selectUnidadRP86').empty();
+                $.each(Datos, function (i) {
+                    if (CodRuta == this.Codigo) {
+                        $('#selectUnidadRP86').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                    if (CodRuta == 0) {
+                        $('#selectUnidadRP86').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#selectUnidadRP86').append('<option value="0" selected >--Todos--</option>');
+                return;
+            }
+            else if (subIndice == 17) {
+                $('#selectPadron').empty();
+                $.each(Datos, function () {
+                    $('#selectPadron').append('<option value="' + this.PadronUnidad + '">' + this.PadronUnidad + '</option>');
+                });
+
+                $("#selectPadron").select2({
+                    //theme: "null"
+                });
+
+                ListaSalidas($('#txtFecha').val(), $('#selectPadron').val());
+                return;
+            } else if (subIndice == 18) {
+                $('#select-unidad-RP134').empty();
+                $.each(Datos, function (i) {
+                    if (CodRuta == this.Codigo) {
+                        $('#select-unidad-RP134').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                    if (CodRuta == 0) {
+                        $('#select-unidad-RP134').append('<option value="' + this.CodUnidad + '"> ' + this.PadronUnidad + ' ' + this.PlacaUnidad + '</option>')
+                    }
+                });
+                $('#select-unidad-RP134').append('<option value="0" selected >--Todos--</option>');
+                return;
+            }
+
+            var primeraUnidad = 0;
+            var flagProcsalida = false;
+            var functionSalida = '';
+            var classIconoBus = '';
+                if (typeof window.ProcSalida === 'undefined'){
+                            
+                } else{
+                    flagProcsalida = true;
+                    functionSalida = "onClick='mostrarSalida($(this));'";
+                }
+
+                JSONUnidad = Datos;
+                tbUnidadCuerpo.empty();
+                $('#tbUnidad2 tbody').empty();
+                var strCuerpo = '';
+                var strCuerpo2 = '';
+                
+                var N = 0
+                
+                $.each(Datos, function (i) {
+                    if (i == 0){
+                        primeraUnidad = this.CodUnidad;
+                    }
+                    if (this.CodEstado == 1) {
+                        classIconoBus = 'primary';
+                    } else {
+                        classIconoBus = 'default';
+                    }
+
+                    if ($('#selEstado').val() != null) {
+                        
+                        var codEstado = $('#selEstado').val();
+                        if (codEstado == 0) {
+                            strCuerpo +=  `<tr data-codaccionista="` + this.CodPersonaAccionista + `"
+                                            data-estadounidad="` + this.CodEstado + `"
+                                            data-unidad="` + `[` + this.PadronUnidad + `] ` + this.PlacaUnidad + `"  ` + functionSalida + `
+                                            data-usuarioedicion="` + this.NomUsuario + `"
+                                            data-fechaedicion="` + this.FechaEdicion + `"
+                                            data-NumEjes="` + this.NumEjes + `"
+                                            data-UnidadNeumaticoEje="` + this.UnidadNeumaticoEje + `"
+                                            data-codcupo="` + this.CodCupo + `"
+                                            data-codunidad="` + this.CodUnidad + `"
+                                            data-estadoDeuda="` + this.EstadoDeuda + `">
+                                                
+                                                <td>
+                                                    <input type="hidden" value="` + this.CodUnidad + `" />
+                                                    <label>${N + 1}</label>
+                                                </td>
+                                                <td>` + this.PadronUnidad + `</td>
+                                                <td style="white-space:nowrap">` + this.PlacaUnidad + `</td>
+                                                <td title="` + this.MarcaUnidad + `" style="width:150px; cursor: default;">
+                                                    <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.MarcaUnidad + `</div>
+                                                </td>
+                                                <td>` + (this.AñoUnidad == 0 ? `` : this.AñoUnidad) + `</td>
+                                                <td>` + this.CombustibleUnidad + `</td>
+                                                <td title="` + this.Propietario + `" style="width:150px; cursor: default;">
+                                                    <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.Propietario + `</div>
+                                                </td>
+                                                <td title="` + this.NomPersonaAccionista + `" style="width:150px; cursor: default;">
+                                                    <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.NomPersonaAccionista + `</div>
+                                                </td>
+                                                <td>` + this.NroCupo + `</td>
+                                                <td>
+                                                    <span data-codigo="` + this.Codigo + `">` + this.Nombre + `</span>
+                                                </td>
+                                                <td>
+                                                    <span >` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</span>
+                                                </td>
+                                                <td>
+                                                    <span >` + (Number(this.EstadoDeuda) == 0 || this.EstadoDeuda == 'null' ? '' : arrSelLeasing[Number(this.EstadoDeuda) - 1]) + `</span>
+                                                </td>
+                                                <td>`+ this.NomSituacion + `</td>
+                                                <td>` + this.NomUsuarioCreacion + `</td>
+                                                <td>` + this.FechaCreacion + `</td>`;
+
+                            if (flagProcsalida == false) {
+                                strCuerpo +=   `<td style="text-align: right;">
+                                                    <i onClick=\"NuevoUnidad(1,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + `);\" class="material-icons dp48 tooltipster" title="Vencimiento" style="cursor:pointer;">date_range</i>
+                                                </td>
+                                                <td style="text-align: right; width:45px;">
+                                                    <i onClick=\"funcDialogUnidadUI(2,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + ',' + this.CodPersonaPropietario + ',' + this.Estado + ', $(this).parent().parent()' + `);\" class="material-icons dp48 tooltipster"  title="Modificar Unidad" style="cursor:pointer;">edit</i>
+                                                </td>
+                                                <td style="text-align: right; width:45px; vertical-align:middle; font-size:18px;font-weight:700">
+                                                    <p onClick=\"historialUnidad($(this).parent().parent());\"  title="Historial Unidad" style="cursor:pointer;">MG</p>
+                                                </td>`;
+                            }                            
+
+                            strCuerpo +=       `<td class="hidden">` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                                <td class="hidden">` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                                <td class="hidden">` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                                <td class="hidden">` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                                <td class="hidden">` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                                <td class="hidden">` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                                <td class="hidden">` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                                <td class="hidden">` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                                <td class="hidden">` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                                <td class="hidden">` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                                <td class="hidden">` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                                <td class="hidden">` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                                <td class="hidden">` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                                <td class="hidden">` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                                <td class="hidden">` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                                <td class="hidden">` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                            </tr>`;
+
+                            strCuerpo2 +=  `<tr>
+                                                <td>${i + 1}</td>
+                                                <td>` + this.PadronUnidad + `</td>
+                                                <td style="white-space:nowrap">` + this.PlacaUnidad + `</td>
+                                                <td>` + this.MarcaUnidad + `</td>
+                                                <td>` + (this.AñoUnidad == 0 ? '' : this.AñoUnidad) + `</td>
+                                                <td>` + this.CombustibleUnidad + `</td>
+                                                <td>` + this.Propietario + `/td>
+                                                <td>` + this.NomPersonaAccionista + `</td>
+                                                <td>` + this.NroCupo + `</td>
+                                                <td>` + this.Nombre + `</td>
+                                                <td>` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</td>
+                                                <td>` + (Number(this.EstadoDeuda) == 0 ? '' : (Number(this.EstadoDeuda) == 1 ? 'LEASING' : 'CANCELADO')) + `</td>
+                                                <td>` + this.NomUsuarioCreacion + `</td>
+                                                <td>` + this.FechaCreacion + `</td>
+                                                <td>` + (this.NomUsuario == null ? '' : this.NomUsuario) + `</td>
+                                                <td>` + (this.FechaEdicion == null ? '' : this.FechaEdicion) + `</td>
+                                                <td>` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                                <td>` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                                <td>` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                                <td>` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                                <td>` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                                <td>` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                                <td>` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                                <td>` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                                <td>` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                                <td>` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                                <td>` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                                <td>` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                                <td>` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                                <td>` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                                <td>` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                                <td>` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                                <td>` + (this.NumCilindros == null ? '' : this.NumCilindros) + `</td>
+                                                <td>` + (this.NroPuertas == null ? '' : this.NroPuertas) + `</td>
+                                                <td>` + (this.TarjetaCirculacion == null ? '' : this.TarjetaCirculacion) + `</td>
+                                                <td>` + (this.EstadoGTU == null ? '' : this.EstadoGTU) + `</td>
+                                            </tr>`;
+                            N++;
+                        } else {
+                            if (this.CodEstado == codEstado) {
+                                strCuerpo +=    `<tr data-codaccionista="` + this.CodPersonaAccionista + `"
+                                                 data-estadounidad="` + this.CodEstado + `"
+                                                 data-unidad="` + `[` + this.PadronUnidad + `] ` + this.PlacaUnidad + `"  ` + functionSalida + `
+                                                 data-usuarioedicion="` + this.NomUsuario + `"
+                                                 data-fechaedicion="` + this.FechaEdicion + `"
+                                                 data-NumEjes="` + this.NumEjes + `"
+                                                 data-UnidadNeumaticoEje="` + this.UnidadNeumaticoEje + `"
+                                                 data-codcupo="` + this.CodCupo + `"
+                                                 data-codunidad="` + this.CodUnidad + `">
+                                                    <td>
+                                                        <input type="hidden" value="` + this.CodUnidad + `" />
+                                                        <label>${N + 1}</label>
+                                                    </td>
+                                                    <td>` + this.PadronUnidad + `</td>
+                                                    <td style="white-space:nowrap">` + this.PlacaUnidad + `</td>
+                                                    <td title="` + this.MarcaUnidad + `" style="width:150px;cursor: default;">
+                                                        <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.MarcaUnidad + `</div>
+                                                    </td>
+                                                    <td>` + (this.AñoUnidad == 0 ? '' : this.AñoUnidad) + `</td>
+                                                    <td>` + this.CombustibleUnidad + `</td>
+                                                    <td title="` + this.Propietario + `" style="width:150px;cursor: default;">
+                                                        <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.Propietario + `</div>
+                                                    </td>
+                                                    <td title="` + this.NomPersonaAccionista + `" style="width:150px;cursor: default;">
+                                                        <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.NomPersonaAccionista + `</div>
+                                                    </td>
+                                                    <td>` + this.NroCupo + `</td>
+                                                    <td>
+                                                        <span data-codigo="` + this.Codigo + `">` + this.Nombre + `</span>
+                                                    </td>
+                                                    <td>
+                                                        <span >` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</span>
+                                                    </td>
+                                                    <td>
+                                                        <span >` + (Number(this.EstadoDeuda) == 0 || this.EstadoDeuda == 'null' ? '' : (Number(this.EstadoDeuda) == 1 ? 'LEASING' : 'CANCELADO')) + `</span>
+                                                    </td>
+                                                    <td>` + this.NomSituacion + `</td>
+                                                    <td>` + this.NomUsuarioCreacion + `</td>
+                                                    <td>` + this.FechaCreacion + `</td>`;
+
+                                if (flagProcsalida == false) {
+                                    strCuerpo +=   `<td style="text-align: right;">
+                                                        <i onClick=\"NuevoUnidad(1,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + `);\" class="material-icons dp48 tooltipster" title="Vencimiento" style="cursor:pointer;">date_range</i>
+                                                    </td>
+                                                    <td style="text-align: right; width:45px;">
+                                                        <i onClick=\"funcDialogUnidadUI(2,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + ',' + this.CodPersonaPropietario + ',' + this.Estado + ', $(this).parent().parent()' + `);\" class="material-icons dp48 tooltipster"  title="Modificar Unidad" style="cursor:pointer;">edit</i>
+                                                    </td>
+                                                    <td style="text-align: right; width:45px;">
+                                                        <i onClick=\"historialUnidad($(this).parent().parent());\" class="material-icons dp48 tooltipster"  title="Historial Unidad" style="cursor:pointer;">history</i>
+                                                    </td>`;
+                                }
+
+                                strCuerpo +=   `<td class="hidden">` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                                <td class="hidden">` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                                <td class="hidden">` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                                <td class="hidden">` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                                <td class="hidden">` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                                <td class="hidden">` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                                <td class="hidden">` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                                <td class="hidden">` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                                <td class="hidden">` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                                <td class="hidden">` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                                <td class="hidden">` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                                <td class="hidden">` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                                <td class="hidden">` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                                <td class="hidden">` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                                <td class="hidden">` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                                <td class="hidden">` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                            </tr>`;
+
+
+
+                                strCuerpo2 +=  `<tr>
+                                                    <td>${i + 1}</td>
+                                                    <td>` + this.PadronUnidad + `</td>
+                                                    <td style="white-space:nowrap">` + this.PlacaUnidad + `</td>
+                                                    <td>` + this.MarcaUnidad + `</td>
+                                                    <td>` + (this.AñoUnidad == 0 ? '' : this.AñoUnidad) + `</td>
+                                                    <td>` + this.CombustibleUnidad + `</td>
+                                                    <td>` + this.Propietario + `</td>
+                                                    <td>` + this.NomPersonaAccionista + `</td>
+                                                    <td>` + this.NroCupo + `</td>
+                                                    <td>` + this.Nombre + `</td>
+                                                    <td>` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</td>
+                                                    <td>` + (Number(this.EstadoDeuda) == 0 ? '' : (Number(this.EstadoDeuda) == 1 ? 'LEASING' : 'CANCELADO')) + `</td>
+                                                    <td>` + this.NomUsuarioCreacion + `</td>
+                                                    <td>` + this.FechaCreacion + `</td>
+                                                    <td>` + (this.NomUsuario == null ? '' : this.NomUsuario) + `</td>
+                                                    <td>` + (this.FechaEdicion == null ? '' : this.FechaEdicion) + `</td>
+                                                    <td>` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                                    <td>` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                                    <td>` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                                    <td>` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                                    <td>` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                                    <td>` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                                    <td>` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                                    <td>` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                                    <td>` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                                    <td>` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                                    <td>` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                                    <td>` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                                    <td>` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                                    <td>` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                                    <td>` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                                    <td>` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                                    <td>` + (this.NumCilindros == null ? '' : this.NumCilindros) + `</td>
+                                                    <td>` + (this.NroPuertas == null ? '' : this.NroPuertas) + `</td>
+                                                    <td>` + (this.TarjetaCirculacion == null ? '' : this.TarjetaCirculacion) + `</td>
+                                                    <td>` + (this.EstadoGTU == null ? '' : this.EstadoGTU) + `</td>
+                                                </tr>`;
+                                N++;
+                            }
+                        }
+                        
+                    } else {
+                        strCuerpo +=   `<tr data-codaccionista="` + this.CodPersonaAccionista + `"
+                                        data-estadounidad="` + this.CodEstado + `" 
+                                        data-unidad="` + `[` + this.PadronUnidad + `] ` + this.PlacaUnidad + `"  ` + functionSalida + ` 
+                                        data-usuarioedicion="` + this.NomUsuario + `" 
+                                        data-fechaedicion="` + this.FechaEdicion + `" 
+                                        data-NumEjes="` + this.NumEjes + `"
+                                        data-UnidadNeumaticoEje="` + this.UnidadNeumaticoEje + `"
+                                        data-codunidad="`+ this.CodUnidad +`">
+                                            <td>
+                                                <input type="hidden" value="` + this.CodUnidad + `" />
+                                                <label>` + (i + 1) + `</label>
+                                            </td>
+                                            <td>` + this.PadronUnidad + `</td>
+                                            <td>` + this.PlacaUnidad + `</td>
+                                            <td title="` + this.MarcaUnidad + `" style="width:150px;cursor: default;">
+                                                <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.MarcaUnidad + `</div>
+                                            </td>
+                                            <td>` + (this.AñoUnidad == 0 ? '' : this.AñoUnidad) + `</td>
+                                            <td>` + this.CombustibleUnidad + `</td>
+                                            <td title="` + this.Propietario + `" style="width:150px;cursor: default;">
+                                                <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.Propietario + `</div>
+                                            </td>
+                                            <td title="` + this.NomPersonaAccionista + `" style="width:150px;cursor: default;">
+                                                <div style="width:140px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">` + this.NomPersonaAccionista + `</div>
+                                            </td>
+                                            <td>
+                                                <span data-codigo="` + this.Codigo + `">` + this.Nombre + `</span>
+                                            </td>
+                                            <td>
+                                                <span >` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</span>
+                                            </td>
+                                            <td>
+                                                <span >` + (Number(this.EstadoDeuda) == 0 ? '' : (Number(this.EstadoDeuda) == 1 ? 'LEASING' : 'CANCELADO')) + `</span>
+                                            </td>
+                                            <td>` + this.NomUsuarioCreacion + `</td>
+                                            <td>` + this.FechaCreacion + `</td>`;
+
+                        if (flagProcsalida == false) {
+                            strCuerpo +=   `<td style="text-align: right;">
+                                                <i onClick=\"NuevoUnidad(1,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + `);\" class="material-icons dp48 tooltipster" title="Vencimiento" style="cursor:pointer;">date_range</i>
+                                            </td>
+                                            <td style="text-align: right; width:45px;">
+                                                <i onClick=\"funcDialogUnidadUI(2,` + this.CodUnidad + ',\'' + this.PadronUnidad + '\',\'' + this.PlacaUnidad + '\',' + (i + 1) + ',' + this.CodPersonaPropietario + ',' + this.Estado + ', $(this).parent().parent()' + `);\" class="material-icons dp48 tooltipster"  title="Modificar Unidad" style="cursor:pointer;">edit</i>
+                                            </td>
+                                            <td style="text-align: right; width:45px;">
+                                                <i onClick=\"historialUnidad($(this).parent().parent());\" class="material-icons dp48 tooltipster"  title="Historial Unidad" style="cursor:pointer;">history</i>
+                                            </td>`;
+                        }
+
+                        strCuerpo +=   `<td class="hidden">` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                        <td class="hidden">` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                        <td class="hidden">` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                        <td class="hidden">` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                        <td class="hidden">` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                        <td class="hidden">` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                        <td class="hidden">` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                        <td class="hidden">` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                        <td class="hidden">` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                        <td class="hidden">` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                        <td class="hidden">` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                        <td class="hidden">` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                        <td class="hidden">` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                        <td class="hidden">` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                        <td class="hidden">` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                        <td class="hidden">` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                    </tr>`;
+
+
+
+                        strCuerpo2 +=   `<tr>
+                                            <td>` + (i + 1) + `</td>
+                                            <td>` + this.PadronUnidad + `</td>
+                                            <td>` + this.PlacaUnidad + `</td>
+                                            <td>` + this.MarcaUnidad + `</td>
+                                            <td>` + (this.AñoUnidad == 0 ? '' : this.AñoUnidad) + `</td>
+                                            <td>` + this.CombustibleUnidad + `</td>
+                                            <td>` + this.Propietario + `</td>
+                                            <td>` + this.NomPersonaAccionista + `</td>
+                                            <td>` + this.Nombre + `</td>
+                                            <td>` + (this.CodEstado == 1 ? 'ACTIVO' : 'INACTIVO') + `</td>
+                                            <td>` + (Number(this.EstadoDeuda) == 0 ? '' : (Number(this.EstadoDeuda) == 1 ? 'LEASING' : 'CANCELADO')) + `</td>
+                                            <td>` + this.NomUsuarioCreacion + `</td>
+                                            <td>` + this.FechaCreacion + `</td>
+                                            <td>` + (this.NomUsuario == null ? '' : this.NomUsuario) + `</td>
+                                            <td>` + (this.FechaEdicion == null ? '' : this.FechaEdicion) + `</td>
+                                            <td>` + (this.AlturaUnidad == null ? '' : this.AlturaUnidad) + `</td>
+                                            <td>` + (this.AnchoUnidad == null ? '' : this.AnchoUnidad) + `</td>
+                                            <td>` + (this.LongitudUnidad == null ? '' : this.LongitudUnidad) + `</td>
+                                            <td>` + (this.CargaUtilUnidad == null ? '' : this.CargaUtilUnidad) + `</td>
+                                            <td>` + (this.ClaseUnidad == null ? '' : this.ClaseUnidad) + `</td>
+                                            <td>` + (this.ColoresUnidad == null ? '' : this.ColoresUnidad) + `</td>
+                                            <td>` + (this.CombustibleUnidad == null ? '' : this.CombustibleUnidad) + `</td>
+                                            <td>` + (this.MotorUnidad == null ? '' : this.MotorUnidad) + `</td>
+                                            <td>` + (this.NombrePersonaConductor == null ? '' : this.NombrePersonaConductor) + `</td>
+                                            <td>` + (this.NumAsientos == null ? '' : this.NumAsientos) + `</td>
+                                            <td>` + (this.NumEjes == null ? '' : this.NumEjes) + `</td>
+                                            <td>` + (this.NumPasajeros == null ? '' : this.NumPasajeros) + `</td>
+                                            <td>` + (this.NumRuedas == null ? '' : this.NumRuedas) + `</td>
+                                            <td>` + (this.PesoBrutoUnidad == null ? '' : this.PesoBrutoUnidad) + `</td>
+                                            <td>` + (this.PesoSecoUnidad == null ? '' : this.PesoSecoUnidad) + `</td>
+                                            <td>` + (this.SerieUnidad == null ? '' : this.SerieUnidad) + `</td>
+                                            <td>` + (this.NumCilindros == null ? '' : this.NumCilindros) + `</td>
+                                            <td>` + (this.NroPuertas == null ? '' : this.NroPuertas) + `</td>
+                                            <td>` + (this.TarjetaCirculacion == null ? '' : this.TarjetaCirculacion) + `</td>
+                                            <td>` + (this.EstadoGTU == null ? '' : this.EstadoGTU) + `</td>
+                                        </tr>`;
+                    }
+                                
+                });
+
+                tbUnidadCuerpo.append(strCuerpo);
+                $('#tbUnidad2 tbody').append(strCuerpo2);
+
+                $('.tooltipster').tooltipster({
+                    animation: 'fade',
+                    delay: 200,
+                    //timer: 1000,
+                    //autoClose: false,
+                    multiple: true,
+                    theme: 'tooltipster-default',
+                    touchDevices: false,
+                    trigger: 'hover',
+                    position: 'right'
+                });
+
+
+                if (flagProcsalida == true) {
+                    listarUnidadesxRuta(selectRuta.val(), JSONUnidad);
+                } else {
+
+                }
+        }
+
+        if (Indice == 12) {
+
+            var CodResultado = Datos[0].CodResultado;
+            var DesResultado = Datos[0].DesResultado;
+            var CodAuxiliar = Datos[0].CodAuxiliar;
+            var f = new Date();
+            var fecha = (f.getDate() + "/" + (f.getMonth() + 1) + "/" + f.getFullYear());
+            if (CodResultado == 0) {
+                ObjUtil.MostrarMensaje(DesResultado, CodResultado);
+                ObjUtil.LoadingMobile('No se encontro unidad', true);
+                setTimeout(function () {
+                    ObjUtil.LoadingMobile('No se encontro unidad', false);
+                    $('#TxtPadronUnidad').val('');
+                    $('#TxtPadronUnidad').focus();
+                }, 1000);
+            } else {
+                ObjUtil.LoadingMobile('Cargando', false);
+                aConsultaSalida.attr('href', '../Produccion/_DetalleSalida/?CodUnidad=' + CodAuxiliar + '&PadronPlaca=' + DesResultado);
+                aConsultaSalida.trigger('click');
+                //window.location = "../Produccion/_DetalleSalida/?CodUnidad=" + CodAuxiliar;
+            }
+        }
+
+        else if (Indice == 15) {
+            $('#selectUnidad').empty();
+            ObjUtil.CargarSelect(Datos, $('#selectUnidad'), 1);
+            $("#selectUnidad").select2({
+                theme: "classic"
+            });
+            return;
+        }
+
+        else if (Indice == 16) {
+            tbDetalleNumeracionBody.empty();
+            $.each(Datos, function (i) {
+                var row = $("<tr /> ");
+                $("<td />").text((i + 1)).appendTo(row);
+                $("<td />").text(this.NomBoleto).appendTo(row);
+                $("<td />").text(this.Numeracion).appendTo(row);
+                tbDetalleNumeracionBody.append(row);
+            });
+            //$('#tabs').tabs("select", 1);
+
+        }
+        else if (Indice == 17) {
+            txtPadron.val(Datos[0].PadronUnidad);
+            txtPlaca.val(Datos[0].PlacaUnidad);
+            selectRutaUnidad.val(Datos[0].CodRuta);
+            txtFecInscrip.val();
+            txtMarca.val(Datos[0].MarcaUnidad);
+            txtModelo.val(Datos[0].ModeloUnidad);
+            txtAnio.val(Datos[0].AñoUnidad);
+            txtClase.val(Datos[0].ClaseUnidad);
+            txtTarjProp.val(Datos[0].TarjetaPropiedad);
+            txtCombust.val(Datos[0].CombustibleUnidad);
+            txtNumMotor.val(Datos[0].MotorUnidad);
+            txtNumSerie.val(Datos[0].SerieUnidad);
+            txtCarroc.val(Datos[0].CarroceriaUnidad);
+            txtColores.val(Datos[0].ColoresUnidad);
+            $('#selConcesionario').val(Datos[0].CodConcesionario);
+            $('#selSituacion').val(Datos[0].CodSituacion);
+            /*Datos tecnicos*/
+            txtPesoBruto.val(Datos[0].PesoBrutoUnidad);
+            txtCargaUtil.val(Datos[0].CargaUtilUnidad);
+            txtPesoSeco.val(Datos[0].PesoSecoUnidad);
+            txtLongitud.val(Datos[0].LongitudUnidad);
+            txtAncho.val(Datos[0].AnchoUnidad);
+            txtAltura.val(Datos[0].AlturaUnidad);
+            txtNumAsientos.val(Datos[0].NumAsientos);
+            txtPasajeros.val(Datos[0].NumPasajeros);
+            txtCilindros.val(Datos[0].NumCilindros);
+            txtEjes.val(Datos[0].NumEjes);
+            txtRuedas.val(Datos[0].NumRuedas);
+            txtTarjetaCirculacion.val(Datos[0].TarjetaCirculacion);
+            $('#txtFecInscrip').val(Datos[0].FechaInscripcion)
+            $('#txtPuertas').val(Datos[0].NroPuertas)
+            $('#txtEstadoGTU').val(Datos[0].EstadoGTU)
+            document.getElementById("checkEnvioATU").checked = Datos[0].EnvioATU
+
+        }
+        else if (Indice == 18) {
+            $('#selectUnidadBusqueda').empty();
+
+
+            if (Datos.length == 0) {
+                $('#selectAperturas').empty();
+                $('#selectUnidadBusqueda').empty();
+                $('#selectUnidadBusqueda').append('<option value="' + 0 + '" >' + "--- No hay información para mostrar ---" + '</option>');
+                $('#selectAperturas').append('<option value="' + 0 + '" >' + "--- No hay información para mostrar ---" + '</option>');
+                utilOSM.eliminarLayer(mapaOSM[0], 'marcadorunidad');
+                utilOSM.eliminarLayer(mapaOSM[0], 'polylinearecorridoproduccion');
+                utilOSM.eliminarLayer(mapaOSM[0], 'marcadorpuntoventa');
+                $('#divMenuReproductor').css('display', 'none');
+                $('#selectUnidadBusqueda').select2();
+                $('#selectAperturas').select2();
+                return;
+            }
+
+            $.each(Datos, function () {
+                $('#selectUnidadBusqueda').append('<option value="' + this.Codigo + '" >' + this.Nombre + '</option>');
+            });
+            //$('#selectUnidadBusqueda').append('<option value="0" >--TODOS--</option>');
+            $('#selectUnidadBusqueda').select2();
+
+            cargarComboAperturas($('#selectUnidadBusqueda').val(), $('#txtFechaConsulta').val())
+            return;
+        }
+        else if (Indice == 21) {
+
+
+            if (Datos[0].CodResultado == 1) {
+                DialogUnidadUI.dialog('close');
+            }
+
+            ObjUtil.MostrarMensaje(Datos[0].DesResultado, Datos[0].CodResultado);
+            ListaUnidad();
+        }
+        else if (Indice == 23) {
+            if (Datos[0].CodResultado == 1) {
+                dialogPropietario.dialog('close');
+            }
+
+            ObjUtil.MostrarMensaje(Datos[0].DesResultado, Datos[0].CodResultado);
+            ListaUnidad();
+        }
+        else if (Indice == 37) {
+            DivCambioRuta.dialog('close');
+            ObjUtil.MostrarMensaje(Datos[0].DesResultado, Datos[0].CodResultado);
+            ListaUnidad();
+        }
+        else if (Indice == 39) {
+            ObjUtil.MostrarMensaje(Datos[0].DesResultado, Datos[0].CodResultado);
+            if(Datos[0].DesResultado == 1){
+                DialogUnidadUI.dialog('close');
+                ListaUnidad();
+            }
+        }
+        else if (Indice == 40) {
+            ListaUnidad();
+            ObjUtil.MostrarMensaje(Datos[0].DesResultado, Datos[0].CodResultado);
+            divDesactivaUnidad.dialog('close');
+        }
+        else if (Indice == 51) {
+            
+            $('#selectUnidad').empty();
+            $.each(Datos, function () {
+                ObjUtil.CargarSelect(Datos, $('#selectUnidad'), 1);
+            });
+            $("#selectUnidad").select2({
+                theme: "classic"
+            });
+            return;
+        }
+        else if (Indice == 52) {
+            $('#selSituacion').empty();
+            let Option = '';        
+            Datos.forEach((situacion, i) => {
+                Option += '<option value="' + situacion.CodSituacion + '">'+ situacion.NomSituacion + '</option>';
+            })
+            $('#selSituacion').append(Option);
+        }
+    });
+}
+
+function DesactivarUnidad(tr, codUnidad, numeracion){
+    var estadoUnidad = tr.attr('data-estadounidad');
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    estadoUnidad = (estadoUnidad == 2 ? 1 : 2);
+    ObjUtil.MantenerSeleccion(numeracion, 'tbUnidad');
+    divDesactivaUnidad.dialog('open');
+    divDesactivaUnidad.dialog({
+        title: (estadoUnidad == 1 ? 'Activar Unidad' : 'Desactivar Unidad' ), 
+        buttons: {
+            'Aceptar': function () {
+                ProcUnidadA(Url, codUnidad, '', '', 0, 0, 0, 0, '', 0, 0, 0, estadoUnidad , '', 0, '', 0, '', '', '', '', '', 0, 0, '', 40);
+            },
+            'Cancelar': function (){
+                $(this).dialog("close");
+            }
+        }
+    });
+}
+
+function obtenerDatosUnidadxCodigo(codUnidad) {    
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, codUnidad, '', '', 0, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 17);
+}
+
+function actualizaDatosUnidad(codigoUsuario, codUnidad, codRuta, nroPlaca, nroPadron, Auxiliar, codigoPropietario, estadoUnidad, checkEmpresa, concesionario, codAccionista, cadenaNeumaticos, estadoLeasing, codCupo, txtFecInscrip, NroPuertas, EstadoGTU, EnvioATU, codSituacion) {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, codUnidad, nroPadron, nroPlaca, codRuta, 0, 0, 0, '', 0, codigoPropietario, 0, estadoUnidad, '', 0, '', 0, '', '', '', '', '', 0, codigoUsuario, Auxiliar + '|' + concesionario + '|' + codAccionista + '|' + cadenaNeumaticos + '|' + estadoLeasing + '|' + codCupo + '|' + NroPuertas + '|' + EstadoGTU + '|' + txtFecInscrip + '|' + EnvioATU + '|' + codSituacion, 39);
+}
+
+function ListaUnidad(subIndice) {    
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, 0, '', '', 0, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, subIndice);
+}
+
+function cargarComboUnidadesConValidador(fechaConsulta) {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, 0, '', '', 0, 0, 0, 0, fechaConsulta, 0, 0, 0, 0, '', 0, '', 0, '', '', '', fechaConsulta, '', 0, 0, '', 18);
+}
+function ListaUnidadPorRuta(codRuta) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 15);
+}
+
+function ListaUnidadPorRutaAI(codRuta) {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 51);
+}
+
+function ListaUnidadPorRutaRP95(codRuta) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, 7);
+}
+
+function ListaUnidadPorRutaRP86(codRuta) {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, 16);
+}
+
+function ListaUnidadPorRutaRP85(codRuta) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, 8);
+}
+
+function ListaUnidadPorRutaRP134(codRuta) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, 0, '', '', codRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, 18);
+}
+
+function GuardarPropietario(codUnidad, codPersona) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, codUnidad, '', '', 0, 0, 0, 0, '', 0, codPersona, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 23, 8);
+}
+
+function ListaSituacion(CodSituacion, NomSituacion) { ///////////////////////
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+
+    return ProcUnidadA(Url, 0, '', '', 0, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 52);
+}   
+
+function llenarSelectUnidadPorRuta(codigoRuta) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, codigoRuta, '', '', codigoRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, 4);
+}
+
+function cargarSelectUnidadPorRuta(codigoRuta, subIndice) {
+    var Url =   NombreAplicacion + '/Unidad/ProcUnidad';
+                ProcUnidadA(Url, codigoRuta, '', '', codigoRuta, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 10, subIndice);
+}
+
+function listaNumeracionValidador(codValidador) {
+    return;
+    if (codValidador == null){
+    } else {
+        var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+        ProcUnidadA(Url, 0, '', '', 0, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, codValidador, 16);
+    }
+}
+
+function guardarUnidad(codigoUsuario, padronUnidad, placaUnidad, codRuta, dataGramaUnidad, codaval, codConcesionario, codAccionista, cadenaNeumaticos, estadoLeasing, codCupo, txtFecInscrip, NroPuertas, EstadoGTU, EnvioATU, codSituacion) {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, 0, padronUnidad, placaUnidad, parseInt(codRuta), 0, 0, 0, '', 0, codaval, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, codigoUsuario, dataGramaUnidad + '|' + codConcesionario + '|' + codAccionista + '|' + cadenaNeumaticos + '|' + estadoLeasing + '|' + codCupo + '|' + NroPuertas + '|' + EstadoGTU + '|' + txtFecInscrip + '|' + EnvioATU + '|' + codSituacion ,21);
+}
+
+function actualizarRuta(codUnidad){
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, codUnidad, '', '', selectRuta.val(), 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 37);
+}
+function cambiarRuta(tr) {
+    var codRuta = tr[0].childNodes[3].childNodes[0].getAttribute("data-codigo");
+    var codunidad = tr[0].childNodes[0].childNodes[0].value;
+        selectRuta.val(codRuta);
+    var padronRuta = '[' + tr[0].childNodes[1].innerText + '] ' + tr[0].childNodes[2].innerText
+        DivCambioRuta.dialog({
+        title: padronRuta + ' Cambio de ruta',
+        buttons: {
+                'Guardar': function (){
+                    actualizarRuta(codunidad);
+                },
+                'Cancelar': function (){
+                    $(this).dialog("close");
+                }
+            },
+            close: function () {
+            }
+        });
+    DivCambioRuta.dialog('open');
+}

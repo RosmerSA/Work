@@ -1,0 +1,629 @@
+var arrCodReporte = [];
+
+var NROPADRON = null;
+var PLACA = null;
+var LADO = null;
+var HSALIDA = null;
+var CODRECORRIDO = null;
+var RUTA = null;
+
+
+function listaCuadreCaja(CodRecaudoBoleto, FechaInicio, FechaFin,
+                                                CodCajaGestionRecaudador, CodCajaGestionConductor,
+                                                CodEstado, CodSucursal, Indice) {
+
+    var Url = NombreAplicacion + '/./ReporteBoleto/getListaCuadreCaja';
+    Data = {
+        CodRecaudoBoleto: parseInt(CodRecaudoBoleto),
+        FechaInicio: FechaInicio,
+        FechaFin: FechaFin,
+        CodCajaGestionRecaudador: CodCajaGestionRecaudador,
+        CodCajaGestionConductor: CodCajaGestionConductor,
+        CodEstado: CodEstado,
+        CodSucursal: CodSucursal,
+        Indice: Indice
+    };
+    $.post(Url, Data, function (Datos){
+        
+        var JSONtabla0 = $.parseJSON(Datos.split('_')[0]);
+        var JSONtabla1 = $.parseJSON(Datos.split('_')[1]);
+        var JSONtabla2 = $.parseJSON(Datos.split('_')[2]);
+
+        $.each(JSONtabla1, function (i) {
+
+            var row = $('<tr />');
+            $("<td />").text((i + 1)).appendTo(row);
+            $("<td />").text(this.FechaHora).appendTo(row);
+            $("<td />").text(this.Documento).appendTo(row);
+            $("<td />").text(this.Unidad).appendTo(row);
+            $("<td />").text(this.Conductor).appendTo(row);
+            $("<td />").text('').appendTo(row);
+            $("<td />").text('').appendTo(row);
+            $("<td />").text(this.Importe).appendTo(row);
+            tbCuadreCajaBody.append(row);
+
+        });
+
+    });
+}
+
+
+function ListaCuadreLiquidacion() {
+    listaCuadreCaja(0, '', '', 2, 0, 0, 0, 90);
+}
+
+
+function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
+                                                CodCajaGestionRecaudador, CodCajaGestionConductor,
+                                                CodEstado, CodSucursal, Indice) {
+
+    Data = {
+        CodRecaudoBoleto: parseInt(CodRecaudoBoleto),
+        FechaInicio: FechaInicio,
+        FechaFin: FechaFin,
+        CodCajaGestionRecaudador: CodCajaGestionRecaudador,
+        CodCajaGestionConductor: CodCajaGestionConductor,
+        CodEstado: CodEstado,
+        CodSucursal: CodSucursal,
+        Indice: Indice
+    };
+    $.getJSON(Url, Data, function (Datos) {
+        if (Indice == 10) { // Lista para mantenimiento
+            tbReportesTbody.empty();
+            $.each(Datos, function (i){
+
+                var row = $('<tr id="trReporte' + this.CodReporte + '"  onClick="cargaReporte($(this),' + this.CodReporte + ',\'' + this.CodigoReporte + '_' + this.TituloReporte + '_' + this.NomReporte + '\' );" />');
+                    $("<td />").text((i+1)).appendTo(row);
+                    $("<td />").text(this.CodigoReporte).appendTo(row);
+                    $("<td />").text(this.TituloReporte).appendTo(row);
+                    $("<td />").text(this.NomReporte).appendTo(row);
+                    tbReportesTbody.append(row);
+            });
+
+            //var roww = $('<tr id="trReporte' + 96 + '"  onClick="cargaReporte($(this),' + 96 + ',\'' + "RP96" + '_' + "Produccion por Salida Vehicular y por Control (Durito)" + '_' + "Produccion por Salida Vehiculary por Control (Durito)" + '\' );" />');
+            //            $("<td />").text((12)).appendTo(roww);
+            //            $("<td />").text("RP96").appendTo(roww);
+            //            $("<td />").text("Produccion por Salida Vehicular y por Control (Durito)").appendTo(roww);
+            //            $("<td />").text("Produccion por Salida Vehicular y por Control (Durito)").appendTo(roww);
+            //tbReportesTbody.append(roww);
+
+        }
+        else if (Indice == 76) { //Lista para mantenimiento
+            
+            tbSalidaUnidad.empty();
+            $.each(Datos, function (i) {
+
+                var row = $('<tr onClick="obtenerPoisicionDeTransact(' + this.CodSalida + ',$(this)' + ');" />');
+
+                $("<td />").text((i + 1)).appendTo(row);
+                $("<td />").text(this.FechaSalida).appendTo(row);
+                $("<td />").text(this.PadronUnidad).appendTo(row);
+                $("<td />").text(this.PlacaUnidad).appendTo(row);
+                $("<td />").text(this.Persona).appendTo(row);
+                $("<td />").text(this.NomRuta).appendTo(row);
+                $("<td />").text(this.Lado).appendTo(row);
+                $("<td />").text(this.FechaHoraInicio).appendTo(row);
+                $("<td />").text(this.FechaHoraFin == null ? '' : this.FechaHoraFin).appendTo(row);
+                $("<td style='text-align:right;' />").text((this.Produccion == null || this.Produccion == '' ? (0).toFixed(2) : this.Produccion.toFixed(2))).appendTo(row);
+                $("<td style='display:none;' />").text(this.CodRecorrido).appendTo(row);
+                tbSalidaUnidad.append(row);
+            });
+        } else if (Indice == 77) { //Obtiene puntos de transaccion Latitud Longitud
+            
+            //ObjUtil.GuardarJson(Datos, "jsonData");
+            jsonMarcador = {};
+            jsonMarcador = Datos;
+            agregarGrupoDeMarcadores();
+
+        var latitudPos = 0
+        var longitudPos = 0
+        var cantidadTransacciones = 0;
+                listaRecorrido(CODRECORRIDO,2);
+            if (Datos.length == 0){
+                ObjUtil.MostrarMensaje("No se encontraron datos",0);
+                return;
+            }
+            if (arrMarcador.length > 0) {
+                
+            }
+            $.each(Datos, function (i) {
+                if (i == 0) {
+                    latitudPos = this.Latitud;
+                    longitudPos = this.Longitud;
+                }
+                
+                cantidadTransacciones++;
+            });
+
+            //var position = new google.maps.LatLng(latitudPos, longitudPos);
+            DivMapaTransaction.dialog({
+                title: '[' + NROPADRON + ' ' + PLACA + '] Detalle salida Ruta ' + RUTA + ' lado ' + LADO + ', hora inicio : ' + HSALIDA
+            });
+
+            $('#lblCantidadTransacciones').text(cantidadTransacciones);
+            DivMapaTransaction.dialog('open');
+            //map.panTo(position);
+            //google.maps.event.trigger(map, 'resize');
+            //map.panTo(position);
+            //map.setZoom(12);
+            
+        } else if (Indice == 79) {
+
+            $('#selectUnidadesConSalida').empty();
+            ObjUtil.CargarSelect(Datos, $('#selectUnidadesConSalida'));
+
+            if ($('#selectUnidadesConSalida').val() != null) {
+                cargarSalidas($('.datetimeRP78').val(), $('#selectUnidadesConSalida').val());
+            }
+
+            if ($('#selectUnidadesConSalida')[0].options.length == 0) {
+                $('#BtnInformeRP78').attr('disabled', 'disabled');
+            } else {
+                $("#BtnInformeRP78").removeAttr("disabled");
+            }
+        }
+        else if (Indice == 80) {
+            
+            $('#selectSalidas').empty();
+            ObjUtil.CargarSelect(Datos, $('#selectSalidas'));
+        }
+        else if (Indice == 84){
+            //console.log(Datos);
+            //return;
+
+            var latitud = 0;
+            var longitud = 0;
+
+            if (Datos.length == 0){
+                ObjUtil.MostrarMensaje("No se encontraron datos", 0);
+                clearOverlays(arrMarcador);
+                return;
+            }
+            if (arrMarcador.length > 0) {
+                clearOverlays(arrMarcador);
+            }
+            $.each(Datos, function (i) {
+               
+                if (i == 0){
+                    latitudPos = this.Latitud;
+                    longitudPos = this.Longitud;
+                }
+                arrMarcador[i + 1] = ObjSuperposicion.CrearMarcador(parseFloat(this.Latitud), parseFloat(this.Longitud), '../Images/iconos/iconoPersona.png', 'Boleto: ' + this.NomBoleto + ' \nHora Transaccion: ' + this.HoraTransaccion, false);
+                cantidadTransacciones++;
+            });
+            
+        } else if (Indice == 90) {
+            console.log('___________indice 90_________');
+            console.log(Datos);
+        }
+    });
+}
+
+function cargarDataUnidadesConSalida(fecha) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+        ProcRecaudoBoletoReporte(Url, 0, fecha, '', 0, 0, 0, 0, 79);
+}
+
+function cargarPuntosTransaccion(fechaInicio, FechaFin, CodRecorrido) { //para /ProduccionControl/Inicio
+
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+        ProcRecaudoBoletoReporte(Url, 0, fechaInicio, FechaFin, 0, 0, 0, CodRecorrido, 84);
+}
+
+function cargarSalidas(fecha,codUnidad){
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+        ProcRecaudoBoletoReporte(Url, 0, fecha , '', codUnidad, 0, 0, 0, 80);
+}
+
+function listaReportes(){
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+        ProcRecaudoBoletoReporte(Url, 0, '', '', 0, 0, 0, 0,10);
+}
+
+function obtenerPoisicionDeTransact(codSalida, tr){
+    if (EstadoMenu == 1) {
+        $('#DivSplit').click();
+    }
+    NROPADRON = tr[0].childNodes[2].innerText;
+    PLACA = tr[0].childNodes[3].innerText;
+    LADO = tr[0].childNodes[6].innerText;
+    HSALIDA = tr[0].childNodes[7].innerText;
+    RUTA = tr[0].childNodes[5].innerText;
+    CODRECORRIDO = tr[0].childNodes[9].innerText;
+    ObjUtil.MantenerSeleccion(tr[0].childNodes[0].innerText, 'tbSalidaUnidad');
+    transaccionBoletoReporte(codSalida);
+}
+
+function transaccionBoletoReporte(codSalida) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, codSalida, '', '', 0, 0, 0, 0, 77);
+}
+
+function listaSalida(fechaSalida){
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, 0, fechaSalida, '', 0, 0, 0, 0, 76);
+}
+
+function hasDuplicates(array){
+    var valuesSoFar = Object.create(null);
+    for (var i = 0; i < array.length; ++i) {
+        var value = array[i];
+        if (value in valuesSoFar) {
+            return true;
+        }
+        valuesSoFar[value] = true;
+    }
+    return false;
+}
+
+function verificaRepetido(array,codReporte) {
+
+    var respuesta = false;
+
+    for (i = 0; i < array.length; i++) {
+        if (array[i] == codReporte) {
+            respuesta = true;
+        }
+    }
+    return respuesta;
+}
+
+var numTabs = 2;
+var TIPO_CONSULTA = 1; //opcion ruta por default
+
+function cargaReporte(tr,codReporte,nombreReport){
+    tr.addClass('hoverReporteTr');
+
+    if (EstadoMenu == 1) {
+        $('#DivSplit').click();
+    }
+    if (!verificaRepetido(arrCodReporte, codReporte)){
+
+        var htmlOpcionReporte = '';
+            //valida el reporte para concatenar su html de busqueda;
+            if (codReporte == 78){
+                htmlOpcionReporte = '<select id="selectUnidadesConSalida"><option>UNIDADES</option></select><select id="selectSalidas"></select>';
+            } else if (codReporte == 82) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp82" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;';
+            } else if (codReporte == 83) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;"id="busquedaFinRp83" type="text" />';
+            }
+            else if (codReporte == 85) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioRuta" type="radio" data-value="1" name="optradio" checked="checked" >' +
+                                        '<select  class="selectRuta85 selectReporte" id="selectRuta" style="margin-left: 9px;width:150px;"></select>' +
+                                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioUnidad" type="radio"  data-value="2" name="optradio">' +
+                                        '<select class="selectUnidad85 selectReporte" id="selectUnidad" style="margin-left: 9px;"></select>' +
+                                        '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioPersona" type="radio"  data-value="3" name="optradio">' +
+                                        '&nbsp;<select class="selectPersona85 selectReporte" id="selectPersona" ></select>';
+            } else if (codReporte == 84) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;"id="busquedaFinRp84" type="text" />';
+            }
+            else if (codReporte == 86) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp86" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                    '<select id="selectRutaRP86" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                    '<select id="selectRecorrido" style="margin-left: 9px;"></select>'+
+                                    '<select id="selectUnidadRP86" style="margin-left: 9px;"></select>';
+            } else if (codReporte == 89) {
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp89" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta89" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                '<strong>Recorrido:&nbsp;&nbsp;</strong><select id="selectRecorrido89" style="margin-left: 9px;"></select>' +
+                                '<strong>Control:&nbsp;&nbsp;</strong><select id="selectControl89" style="margin-left: 9px;"></select>';
+                //'<strong>Recorrido:&nbsp;&nbsp;</strong><select id="selectUnidades" style="margin-left: 9px;"></select>';
+            } else if (codReporte == 92) {
+                htmlOpcionReporte = '&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRutaRP92" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                '<strong style="display:none;">Unidad:&nbsp;&nbsp;</strong><select id="selectUnidadRP89" style="margin-left: 9px;display:none;"></select>';
+            } else if (codReporte == 95) {
+
+                htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp95" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                                    '<input style="width:65px;" type="text" id="txtHoraIniRP95" value="05:00" />&nbsp;:&nbsp;' +
+                                    '<input style="width:65px;" type="text" id="txtHoraFinRP95" value="23:59" />' +
+                                    '<select id="selectRutaRP95"></select>' +
+                                    '&nbsp;&nbsp;<select id="selectLadoRP95"><option value="A">A</option><option value="B">B</option></select>' +
+                                    '&nbsp;&nbsp;<select id="selectUnidadRP95"></select>';
+            }
+            //else if (codReporte == 96) {
+            //    htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp96" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+            //                    '<input style="width:65px;" type="text" id="txtHoraIniRP96" value="05:00" />&nbsp;:&nbsp;' +
+            //                    '<input style="width:65px;" type="text" id="txtHoraFinRP96" value="23:59" />' +
+            //                    '<select id="selectRutaRP96"></select>' +
+            //                    '&nbsp;&nbsp;<select id="selectLadoRP96"><option value="A">A</option><option value="B">B</option></select>' +
+            //                    '&nbsp;&nbsp;<select id="selectUnidadRP96"></select>';
+            //}
+        
+            arrCodReporte.push(codReporte);
+        var codigoReporte = nombreReport.split('_')[0];
+        var tituloReporte = nombreReport.split('_')[1];
+        var nombreReporte = nombreReport.split('_')[2];
+        var Url = '';
+        //inicializando parametros 
+        $('#tabReportes ul').append('<li title="' + nombreReporte + '" ><a href="#tabs-' + numTabs + '">' + codigoReporte + '</a><span onClick="cerrarTab(' + numTabs + ',$(this),' + codReporte + ')" style="position: absolute;right: 0px;top: -5px;cursor:pointer;" class="ui-closable-tab"><i style="font-size: 18px;position: absolute;right: -2px;top: 3px;" class="medium material-icons" >cancel</i></span></li>');
+        Url = '<div id="tabs-' + numTabs + '" >' +
+                '<div id="divParametros" class="sombraFueraDeMapa1" >' +
+                    '<div style="float:left;" class="margenDivParametros1">' +
+                        '<strong>Fecha:&nbsp;</strong><input class="datetime' + codigoReporte + '" style="width: 108px;height:28px;" id="busqueda' + numTabs + '" type="text" placeholder="Busqueda">' +
+                        '&nbsp;' +
+                        htmlOpcionReporte +
+                        '&nbsp;<button style="height: 31px;padding-top: 0;padding-bottom: 0;" id="BtnInforme' + codigoReporte + '" onClick="informeReporte(' + '\'' + codigoReporte + '\');" >Informe</button>' +
+                    '</div>'+
+                '</div>'+
+                '<div  style="position:absolute;top:120px;left:0;right:0;bottom:0px;" >' +
+                    '<iframe id="iframeReporte' + codigoReporte + '" style="width:100%;border:0px;" height="100%" ></iframe>' +
+                '</div>' +
+            '</div>';
+
+        //alert($('#DivContenedor').height());
+        $('#tabReportes').append(Url);
+        //$('.divparaiframe').height($(window).height());
+
+        if(codReporte == 78){
+            cargarDataUnidadesConSalida(ObjUtil.ObtenerFechaActual());
+        } else if (codReporte == 84) {
+            $('#busquedaFinRp84').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+            $('#busquedaFinRp84').val(ObjUtil.ObtenerFechaActual());
+        } else if (codReporte == 82) {
+            $('#busquedaFinRp82').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+            $('#busquedaFinRp82').val(ObjUtil.ObtenerFechaActual());
+            
+        } else if (codReporte == 83) {
+            
+            $('#busquedaFinRp83').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+            $('#busquedaFinRp83').val(ObjUtil.ObtenerFechaActual());
+        }
+        else if (codReporte == 85) {
+
+            $('#busquedaFin').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+
+            $('#busquedaFin').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 10);// 0 = opc todos NO , 10 = indice
+
+            $('#selectRuta').change(function (){
+                agregaOpcTodos($('.selectUnidad85'));
+                agregaOpcTodos($('.selectPersona85'));
+                $("#radioRuta").prop("checked", true);
+                TIPO_CONSULTA = $('#radioRuta').attr('data-value');
+                //ListaUnidadPorRutaRP95($('#selectRutaRP95').val());
+                ListaUnidadPorRutaRP85($('#selectRuta').val());
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $('#selectUnidad').change(function () {
+                agregaOpcTodos($('.selectRuta85'));
+                agregaOpcTodos($('.selectPersona85'));
+                $("#radioUnidad").prop("checked", true);
+                TIPO_CONSULTA = $('#radioUnidad').attr('data-value');
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $('#selectPersona').change(function () {
+                agregaOpcTodos($('.selectRuta85'));
+                agregaOpcTodos($('.selectUnidad85'));
+                $("#radioPersona").prop("checked", true);
+                TIPO_CONSULTA = $('#radioPersona').attr('data-value');
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $("input[name=optradio]").click(function () {
+                TIPO_CONSULTA = $(this).attr('data-value');
+                agregaOpcTodos($('.selectReporte'));
+                if (TIPO_CONSULTA == 1) {
+                    if ($("#selectRuta").val() == 0) {
+                        $("#selectRuta").val($("#selectRuta option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 2) {
+                    if ($("#selectUnidad").val() == 0) {
+                        $("#selectUnidad").val($("#selectUnidad option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 3) {
+                    if ($("#selectPersona").val() == 0) {
+                        $("#selectPersona").val($("#selectPersona option:first").val());
+                    }
+                }
+                convertirSelect2($(".selectReporte"));
+            });
+        } else if (codReporte == 86) {
+            $('.datetimerango').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+            $('.datetimerango').val(ObjUtil.ObtenerFechaActual());
+            cargarTodosLosRecorridos(11);
+
+            $('#selectRutaRP86').change(function () {
+                cargarSelectRecorridoXIdRuta($('#selectRutaRP86').val(), JSONRecorridos, $('#selectRecorrido'));
+            });
+        } else if (codReporte == 89) {
+            $('#busquedaFinRp89').datepicker({
+                dateFormat: 'dd/mm/yy',
+            });
+            $('#busquedaFinRp89').val(ObjUtil.ObtenerFechaActual());
+            cargarTodosLosRecorridos(12);
+
+            $('#selectRecorrido89').change(function () {
+                cargarComboControl($('#selectRecorrido89').val());
+            });
+
+            $('#selectRuta89').change(function () {
+                cargarSelectRecorridoXIdRuta($('#selectRuta89').val(), JSONRecorridos, $('#selectRecorrido89'));
+                cargarComboControl($('#selectRecorrido89').val());
+            });
+        } else if (codReporte == 92) {
+            cargarTodasLasRutas(1, 13);
+        } else if (codReporte == 95) { // RP95
+            $('#busquedaFinRp95').datepicker({
+                //dateFormat: 'dd/mm/yy',
+                dateFormat: 'dd/mm/yy',
+            });
+            $('#busquedaFinRp95').val(ObjUtil.ObtenerFechaActual());
+
+            $('#txtHoraIniRP95').datetimepicker({
+                datepicker: false,
+                format: 'H:i'
+            });
+
+            $('#txtHoraFinRP95').datetimepicker({
+                datepicker: false,
+                format: 'H:i'
+            });
+            cargarTodasLasRutas(1, 18);//1: todas las rutas , 18 : subindice ----> cargar  rutas y unidades
+            $('#selectRutaRP95').change(function () {
+                ListaUnidadPorRutaRP95($('#selectRutaRP95').val());
+            });
+        }
+
+        tabReportes.tabs('destroy');
+        tabReportes.tabs();
+        tabReportes.tabs({ active: numTabs-1 });
+        //$("#tabReportes").tabs("select", "#tabs-1");
+
+        $('.datetime' + codigoReporte).datepicker({
+            dateFormat: 'dd/mm/yy',
+        });
+
+        $('.datetime' + codigoReporte).val(ObjUtil.ObtenerFechaActual());
+        numTabs++;
+
+        if ($('.datetimeRP78')){//para el rp78
+            $('.datetimeRP78').change(function (){
+                $('#selectSalidas').empty();
+                cargarDataUnidadesConSalida($('.datetimeRP78').val());
+            });
+
+            $('#selectUnidadesConSalida').change(function () {
+                cargarSalidas($('.datetimeRP78').val(), $('#selectUnidadesConSalida').val());
+            });   
+        }
+    } 
+}
+
+function agregaOpcTodos(select){
+    var existeOpctodos = 0;
+
+    select.find('option').each(function (){
+        if (this.value == 0) {
+            existeOpctodos = 1;
+        }
+    });
+
+    if (existeOpctodos == 0) {
+        select.append('<option value="0" selected>--- TODOS ---</option>');
+    } else {
+        select.val(0);
+    }   
+}
+
+function convertirSelect2(select) {
+    select.select2({ // para que aparezca el select 2 
+        theme: "classic"
+    });
+}
+
+function verificaSesion(){
+    var Url = NombreAplicacion + '/./ReporteBoleto/verificaSesion';
+
+    Data = {
+    };
+    $.getJSON(Url, Data, function (Datos) {
+
+
+        console.log(Datos);
+    });
+
+}
+
+function informeReporte(codigoReporte) {
+    
+    ObjUtil.BloquearPantalla();
+
+    var fechaConsulta = $('.datetime' + codigoReporte).val();
+
+
+    $('#iframeReporte' + codigoReporte).on('load', function () {
+        // $(this).show();s
+        //console.log('load the iframe')
+        ObjUtil.DesbloquearPantalla();
+    });
+
+    switch (codigoReporte){
+        case 'RP78':
+            if (!$('#selectSalidas').val()){
+                ObjUtil.MostrarMensaje("No existen salidas para la unidad " + $("#selectUnidadesConSalida option:selected").text(), 0);
+            } else {
+                $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&CodigoSalida=' + $('#selectSalidas').val());
+            }
+            break;
+        case 'RP82':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFinRp82').val());
+            break;
+
+        case 'RP83':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFinRp83').val());
+            break;
+
+        case 'RP84':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&CodigoSalida=' + $('#selectSalidas').val() +
+                                                            '&FechaReporteFin=' + $('#busquedaFinRp84').val());
+            break;
+        case 'RP85':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&FechaReporteFin=' + $('#busquedaFin').val() + '&codRuta=' + $('#selectRuta').val() + '&codTipo=' + TIPO_CONSULTA + '&codUnidad=' + $('#selectUnidad').val() + '&codPersona=' + $('#selectPersona').val() +
+                '&CodigoSalida=' + $('#selectSalidas').val());
+            break;
+        case 'RP86':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&FechaReporteFin=' + $('#busquedaFinRp86').val() + '&codRuta=' + $('#selectRecorrido').val());
+            break;
+        case 'RP89':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&FechaReporteFin=' + $('#busquedaFinRp89').val() + '&codRuta=' + $('#selectRecorrido89').val() + '&codControl=' + $('#selectControl89').val());
+            break;
+        case 'RP92':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                 '&codRuta=' + $('#selectRutaRP92').val());
+            break;
+        case 'RP95':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                 '&FechaReporteFin=' + $('#busquedaFinRp95').val() + '&HoraInicioReporte=' + $('#txtHoraIniRP95').val() + '&HoraFinReporte=' + $('#txtHoraFinRP95').val()+
+                 '&codRuta=' + $('#selectRutaRP95').val() + '&codLado=' + $('#selectLadoRP95').val() + '&codUnidad=' + $('#selectUnidadRP95').val());
+            break;
+        default:
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta);
+            break;
+    }
+}
+
+function cerrarTab(numTab, spanClose ,codReporte) {
+
+
+    $('#trReporte' + codReporte + '').removeClass('hoverReporteTr');
+
+    //removerArray(arrCodReporte, codReporte);
+    removerArray(arrCodReporte,codReporte);
+    spanClose.parent().remove();
+    $('#tabs-' + numTab).remove();
+    tabReportes.tabs("refresh");
+    //tabReportes.tabs("option", "selected", 1);
+}
+
+function removerArray(arr){
+
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        
+        what = a[--L];
+        while ((ax = arr.indexOf(what)) !== -1) {
+            //alert(ax);
+            arr.splice(ax, 1);
+        }
+    }
+    
+    return arr;
+}

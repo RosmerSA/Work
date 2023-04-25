@@ -1,0 +1,269 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using TransRecaudo.Utilidades;
+using TgpsDAL;
+using System.Data.SqlClient;
+using Newtonsoft.Json;
+using Tgps.Clases.Implementacion;
+
+namespace Tgps.Controllers
+{
+    public class ReporteBoletoController : Controller
+    {
+        // GET: /UsuarioTipo/
+        Util ObjUtil = new Util();
+        public ActionResult Inicio(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            var listaVistas = Session["MenuVistas"] as Dictionary<int, string>;
+            String controller = "REPORTEBOLETO";
+            String action = "INICIO";
+            String ActionController = controller + "/" + action;
+            Boolean auxValida = false;
+            UtilController Util = new UtilController();
+            String[] Acciones = new String[60];
+
+            auxValida = Util.validaVistaxPerfil(ActionController, listaVistas);
+            Acciones = Util.validaAccionesxVista(ActionController, Session["AccionVista"].ToString());
+
+            var xx = Acciones.Length;
+
+            Session["Acciones"] = Acciones;
+            if (auxValida)
+            {
+                return View();
+            }
+            else
+            {
+                return RedirectToAction("Inicio", "Inicio");
+            }
+        }
+
+        public ActionResult AnalisisGeneral(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+
+        public ActionResult AnalisisTransaccion(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+
+        public ActionResult AnalisisTransaccion_MapsOSM(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+
+        public ActionResult ReporteBoletoIntegrado(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+
+        public ActionResult ReporteBoletoConsolidado(string n)
+        {
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            return View();
+        }
+        public ActionResult ReporteBoletoIntegradoV2(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+        public ActionResult ReporteIPK(string n)
+        {
+            /****set title menu****/
+            ViewBag.NomMenu = new Util().getTitleWeb(n);
+            /*********************/
+            return View();
+        }
+
+        public JsonResult ProcReporteIndicadores(string Auxiliar, int Indice)
+        {
+            DataSet Ds = new DataSet();
+            DataTable Dt = new DataTable();
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+            Ds = new  ReporteIndicadoresDAL().ProcReporteIndicadores(Auxiliar, Indice, CadenaConexion);
+            return getJson(Ds.Tables[0]);
+        }
+
+        public ActionResult verificaSesion()
+        {
+
+            string result = "";
+            var codigoPersona = Session["CodUsuario"];
+
+            if (codigoPersona == null)
+            {
+                result = "0|Sesion Inactiva";
+                return RedirectToAction("Login", "Usuario");
+            }
+            else{
+                result = "1|Sesion Activa";
+                return RedirectToAction("inicio", "inicio");
+            }
+
+            
+        }
+
+        #region Controlador para la entidad RecaudoReportes
+        [AllowAnonymous]
+        public JsonResult RecaudoBoletoReporte(int CodRecaudoBoleto, string FechaInicio, string FechaFin,
+                                                int CodCajaGestionRecaudador, int CodCajaGestionConductor,
+                                                int CodEstado, int CodSucursal, int Indice)
+        {
+            //CodUsuarioAccion = int.Parse(Session["CodUsuario"].ToString());
+            DataSet Ds = new DataSet();
+            DataTable Dt = new DataTable();
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+            int CodUsuario = (int)Session["CodigoUsuario"];
+
+            Ds = new ReporteBoletoDAL().ProcRecaudoBoletoReportes(CodRecaudoBoleto, FechaInicio, FechaFin,
+                                                CodCajaGestionRecaudador, CodCajaGestionConductor,
+                                                CodEstado, CodSucursal, Indice, CadenaConexion);
+            return getJson(Ds.Tables[0]);
+        }
+
+        public string getListaCuadreCaja(int CodRecaudoBoleto, string FechaInicio, string FechaFin,
+                                        int CodCajaGestionRecaudador, int CodCajaGestionConductor,
+                                        int CodEstado, int CodSucursal, int Indice)
+        {
+            //CodUsuarioAccion = int.Parse(Session["CodUsuario"].ToString());
+            DataSet Ds = new DataSet();
+            DataTable Dt = new DataTable();
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+            int CodUsuario = (int)Session["CodigoUsuario"];
+
+            Ds = new ReporteBoletoDAL().ProcRecaudoBoletoReportes(CodRecaudoBoleto, FechaInicio, FechaFin,
+                                                CodCajaGestionRecaudador, CodCajaGestionConductor,
+                                                CodEstado, CodSucursal, Indice, CadenaConexion);
+
+            string strTabla0 = "";
+            string strTabla1 = "";
+            string strTabla2 = "";
+
+            strTabla0 = ObjUtil.convertirFormatoJSON(Ds.Tables[0]);
+            strTabla1 = ObjUtil.convertirFormatoJSON(Ds.Tables[1]);
+            strTabla2 = ObjUtil.convertirFormatoJSON(Ds.Tables[2]);
+
+            return strTabla0 + "_" + strTabla1 + "_" + strTabla2;
+        }
+
+        #endregion
+
+        #region Devuelve un objeto json
+        public JsonResult getJson(DataTable dt)
+        {
+            Util objUtil = new Util();
+            List<Dictionary<string, object>> lstPersons = objUtil.GetTableRows(dt);
+            return Json(lstPersons, JsonRequestBehavior.AllowGet);
+        }
+        #endregion
+
+        public string CargarRp111(string fechaInicio, string fechaFin, string padron, string codRuta)
+        {
+            Dictionary<string, DataTable> respuesta = new Dictionary<string, DataTable>();
+            DataSet Ds = new DataSet();
+
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+
+            Ds = new CajaGestionConductorReportesDAL()
+            .ProcCajaGestionConductorReportes(0, 0, 0, 0, 0, fechaInicio, fechaFin, 0, 0, 0, 0, 0, padron + '|' + codRuta, 111, CadenaConexion);
+
+            var i = 0;
+            foreach (DataTable dt in Ds.Tables)
+            {
+                respuesta.Add("dt" + i, dt);
+                i++;
+            } 
+
+            return JsonConvert.SerializeObject(respuesta, Formatting.Indented);
+        }
+
+        public string CargarRp112(string codRuta, string mes, string year, int situacion, int indice)
+        {
+            Dictionary<string, DataTable> respuesta = new Dictionary<string, DataTable>();
+            DataSet Ds = new DataSet();
+
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+
+            Ds = new CajaGestionConductorReportesDAL().ProcCajaGestionConductorReportes(0, 0, 0, 0, 0, "", "", 0, 0, 0, 0, 0, codRuta + '|' + mes + '|' + year + '|' + situacion, indice, CadenaConexion);
+
+            var i = 0;
+            foreach (DataTable dt in Ds.Tables)
+            {
+                respuesta.Add("dt" + i, dt);
+                i++;
+            }
+
+            return JsonConvert.SerializeObject(respuesta, Formatting.Indented);
+        }
+
+        public string CargarRp82(string fechaInicio, string fechaFin)
+        {
+            Dictionary<string, DataTable> respuesta = new Dictionary<string, DataTable>();
+            DataSet Ds = new DataSet();
+
+            int codCajaGestionRecaudado = Int32.Parse(Session["CodCajaGestionRecaudador"].ToString());
+
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+
+            Ds = new ReporteBoletoDAL().ProcRecaudoBoletoReportes(0, fechaInicio, fechaFin, codCajaGestionRecaudado, 0, 0, 0, 82, CadenaConexion);
+
+            var i = 0;
+            foreach (DataTable dt in Ds.Tables)
+            {
+                respuesta.Add("dt" + i, dt);
+                i++;
+            }
+
+            return JsonConvert.SerializeObject(respuesta, Formatting.Indented);
+        }
+
+        public string ProcBoletoTransaccionReporteV2(string Parametro, int Indice)
+        {
+            Dictionary<string, DataTable> respuesta = new Dictionary<string, DataTable>();
+            DataSet Ds = new DataSet();
+
+            String CadenaConexion = Session["CadenaConexion"].ToString();
+
+            string Procedimiento = "ProcBoletoTransaccionReporteV2";
+            string executionString = "Exec " + Procedimiento + " " + Parametro + "', " + Indice;
+
+            Auditoria auditoria = new Auditoria(Request);
+
+            Ds = new ProcBoletoTransaccionReporteV2DAL().ProcBoletoTransaccionReporteV2(Parametro, Indice, CadenaConexion);
+
+            auditoria.saveAudit(executionString, Procedimiento);
+
+            var i = 0;
+            foreach (DataTable dt in Ds.Tables)
+            {
+                respuesta.Add("dt" + i, dt);
+                i++;
+            }
+
+            return JsonConvert.SerializeObject(respuesta, Formatting.Indented);
+        }
+         
+    }
+}

@@ -40,11 +40,9 @@ function listaCuadreCaja(CodRecaudoBoleto, FechaInicio, FechaFin,
             $("<td />").text('').appendTo(row);
             $("<td />").text(this.Importe).appendTo(row);
             tbCuadreCajaBody.append(row);
-
         });
-
     });
-}
+};
 
 
 function ListaCuadreLiquidacion() {
@@ -67,6 +65,9 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
     };
 
     $.getJSON(Url, Data, function (Datos) {
+
+        let SinReporte = 'https://minio.api.abexacloud.com/api/Archivo/verImagen?NombreCarpeta=tgps&NombreImagen=consultas-reportes-tsir%2FSinReporte'
+
         if (Indice == 10) { // Lista para mantenimiento
             tbReportesTbody.empty();
             var contador = 1;
@@ -81,7 +82,7 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
                                         <td>${contador++}</td>
                                         <td>${this.CodigoReporte}</td>
                                         <td>${this.TituloReporte}</td>
-                                        <td>${this.Descripcion}</td>
+                                        <td>${this.Descripcion ? this.Descripcion : ''}</td>
                                         <td style="padding-left:43px"><i id="vistaPrevia${this.CodReporte}" title="" style="font-size:30px" class="fas fa-image " aria-hidden="true"></i></td>
                                     </tr>
                                     `
@@ -104,7 +105,7 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
                     //    },
                     //});
                     $(`#vistaPrevia${data.CodReporte}`).tooltip({
-                        content: `<img style="width:400px" src="${data.ImagenReporte}" />`,
+                        content: `<img style="width:400px;max-height:200px" src="${data.ImagenReporte ? data.ImagenReporte : SinReporte}" />`,
                         position: {
                             my: "center bottom-40",
                         },
@@ -118,6 +119,7 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
             })
 
         }
+
         else if (Indice == 76) { //Lista para mantenimiento
             tbSalidaUnidad.empty();
             $('#tbSalidaUnidad2 tbody').empty();
@@ -207,13 +209,11 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
                 $("#BtnInformeRP78").removeAttr("disabled");
             }
         }
-
         else if (Indice == 80) {
 
             $('#selectSalidas').empty();
             ObjUtil.CargarSelect(Datos, $('#selectSalidas'));
         }
-
         else if (Indice == 84) {
             //console.log(Datos);
             //return;
@@ -243,8 +243,7 @@ function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
             });
 
         } else if (Indice == 90) {
-            console.log('___________indice 90_________');
-            console.log(Datos);
+
         }
     });
 }
@@ -328,6 +327,7 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
     if (EstadoMenu == 1) {
         $('#DivSplit').click();
     }
+
     if (!verificaRepetido(arrCodReporte, codReporte)) {
 
         var htmlOpcionReporte = '';
@@ -421,28 +421,39 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                                     </div>`;
 
         } else if (codRP == 'RP78') {
-            htmlOpcionReporte = '<select id="selectUnidadesConSalida"><option>UNIDADES</option></select><select id="selectSalidas"></select>' +
-            `<div style="float: right; position: relative; top: -10px;">
-                <div id="DivlblTitulo">
-                    <h2 id="lblTitulo">Producción Global por Fechas</h2>
-                </div>
-            </div>`;
+            htmlOpcionReporte = '<select id="selectUnidadesConSalida"><option>UNIDADES</option></select><select id="selectSalidas"></select>';
 
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                    <div id="DivlblTitulo">
+                                        <h2 id="lblTitulo">Producción Total de Flota</h2>
+                                    </div>
+                                </div>`;
         } else if (codRP == 'RP82') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp82" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;';
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte82();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport82" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP82();"><img width="21" src="../Images/logo/print_.png"></button>';
-
+                htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                    <div id="DivlblTitulo">
+                                        <h2 id="lblTitulo">Detalle de transaccion por salidas</h2>
+                                    </div>
+                                </div>`;
         } else if (codRP == 'RP83') {
             htmlOpcionReporte = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioRuta83" type="radio" data-value="1" name="optradio83" checked="checked" >' +
                 '<select  class="selectRuta83 selectReporte83" id="selectRuta83" style="margin-left: 9px;width:150px;"></select>' +
                 '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioUnidad83" type="radio"  data-value="2" name="optradio83">' +
                 '<select class="selectUnidad83 selectReporte83" id="selectUnidad83" style="margin-left: 9px;width:150px;"></select>' +
                 '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioPersona83" type="radio"  data-value="3" name="optradio83">' +
-                '&nbsp;<select class="selectPersona83 selectReporte83" id="selectPersona83" style="width:250px !important" ></select>';
+                '&nbsp;<select class="selectPersona83 selectReporte83" id="selectPersona83" style="width:250px !important" ></select>'; 
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte83();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport83" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP83();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción por Apertura</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP85') {
 
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
@@ -457,6 +468,13 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte85();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport85" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP85();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción Detallada Boleto Electrónico</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP84') {
             //htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin84" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
             //                        '<select  class="selectRuta84 selectReporte" id="selectRuta84" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -471,18 +489,39 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte86();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport86" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP86();"><img width="21" src="../Images/logo/print_.png"></button>';
+            
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Demanda Horaria por Controles</h2>
+                </div>
+            </div>`;
+            
         } else if (codRP == 'RP89') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp89" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta89" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong>Recorrido:&nbsp;&nbsp;</strong><select id="selectRecorrido89" style="margin-left: 9px;"></select>' +
                 '<strong>Control:&nbsp;&nbsp;</strong><select id="selectControl89" style="margin-left: 9px;"></select>';
 
+                htmlOpcionReporte += 
+                `<div style="float: right; position: relative; top: -10px;">
+                    <div id="DivlblTitulo">
+                        <h2 id="lblTitulo">Produccion de Controles</h2>
+                    </div>
+                </div>`;
+
         } else if (codRP == 'RP92') {
             htmlOpcionReporte = '&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRutaRP92" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong style="display:none;">Unidad:&nbsp;&nbsp;</strong><select id="selectUnidadRP89" style="margin-left: 9px;display:none;"></select>';
-        } else if (codRP == 'RP95') {
 
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Corte de Boleto Diario</h2>
+                </div>
+            </div>`;
+        } else if (codRP == 'RP95') {
             htmlOpcionReporte = //'&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp95" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 //'<input style="width:65px;" type="text" id="txtHoraIniRP95" value="05:00" />&nbsp;:&nbsp;' +
                 //'<input style="width:65px;" type="text" id="txtHoraFinRP95" value="23:59" />' +
@@ -492,30 +531,45 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte95();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport95" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP95();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción vehicular según punto y hora de salida</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP96') {
 
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp96" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select id="selectUnidadRP96" style="margin-left: 9px;display:none;"></select>&nbsp;&nbsp;' +
                 '<select id="selectRutaRP96"></select>&nbsp;&nbsp;' +
                 '&nbsp;&nbsp;<select id="selecteRecorridoRP96">';
+
+            // htmlOpcionReporte += 
+            // `<div style="float: right; position: relative; top: -10px;">
+            //     <div id="DivlblTitulo">
+            //         <h2 id="lblTitulo">Producción Global por Fechas</h2>
+            //     </div>
+            // </div>`;
         } else if (codRP == 'RP111') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp111" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta111" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<strong>Padron:&nbsp;&nbsp;</strong><input id="txtPadron111"></input>';
 
-            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte111();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' + '&nbsp;<button title="Imprimir" id="btnExport111" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP111();"><img width="21" src="../Images/logo/print_.png"></button>';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte111();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport111" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP111();"><img width="21" src="../Images/logo/print_.png"></button>';
 
             htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
-                                        <div id="DivlblTitulo">
-                                            <h2 id="lblTitulo">Producción Global por Fechas</h2>
-                                        </div>
-                                    </div>`;
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción Global por Fechas</h2>
+                </div>
+            </div>`;
 
         } else if (codRP == 'RP112') {
-            htmlOpcionReporte = '<div style=" display: flex; float: left; margin:0" class="margenDivParametros" >' +
-                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Ruta:&nbsp;&nbsp;</strong><select id="selectRuta112" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;' +
-                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Mes:&nbsp;&nbsp;</strong>' +
-                '<select id="selectMes112" style="margin-left: 9px;">' +
+            htmlOpcionReporte = '<div style="float: left; margin:0" class="margenDivParametros" >' +
+                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta112" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong >Mes:&nbsp;&nbsp;</strong>' +
+                '<select style="margin-right: 9px;" id="selectMes112" style="margin-left: 9px;">' +
                 '<option value="1">ENERO</option>' +
                 '<option value="2">FEBRERO</option>' +
                 '<option value="3">MARZO</option>' +
@@ -529,7 +583,9 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '<option value="11">NOVIEMBRE</option>' +
                 '<option value="12">DICIEMBRE</option>' +
                 '</select>' +
-                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Año:&nbsp;&nbsp;</strong>' +
+
+                '<strong>Año:&nbsp;&nbsp;</strong>' +
+
                 '<select id="selectAnio112" style="margin-left: 9px;">' +
                 '<option value="2016">2016</option>' +
                 '<option value="2017">2017</option>' +
@@ -540,19 +596,30 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '<option value="2022">2022</option>' +
                 '<option value="2023">2023</option>' +
                 '</select>' +
+
                 '&nbsp;<select class="selectSituacionEmpresa85" id="selSituacion112" style="width:250px !important" ></select>';
 
-            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte112();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' + '&nbsp;<button title="Imprimir" id="btnExport112" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP112();"><img width="21" src="../Images/logo/print_.png"></button></div>' 
-            + `<div style="float: right; position: relative; top: -10px;">
-            <div id="DivlblTitulo">
-            <h2 id="lblTitulo">Producción vehicular mensual por boleto</h2>
-            </div></div>`;
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte112();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport112" style="height: 31px; padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP112();"><img width="21" src="../Images/logo/print_.png"></button>';
 
+                htmlOpcionReporte += 
+            `<div style="margin-left: 220px; margin-right: 20px;float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción vehicular mensual por boleto</h2>
+                </div>
+            </div>`;
+                
         } else if (codRP == 'RP113') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin113" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select  class="selectRuta113 selectReporte" id="selectRuta113" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select  class="selectUnidad113 selectReporte" id="selectUnidad" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Mapeo Operacional</h2>
+                </div>
+            </div>`;       
         } else if (codRP == 'RP114') {
             htmlOpcionReporte = `<i title="Fecha Inicio" class="far fa-calendar-alt" style=""></i>
                                 <input type="text" class="Fecha${codRP}" form-control" id="fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>`
@@ -564,7 +631,13 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '</button>' +
                 '<button title="Exportar a Excel" id="btn-exportar-${codRP}" onclick="exportarReporte114()" style="position: relative; top: 1px;"><img src="../Images/icoExcel.png" /></button>' +
                 '&nbsp;&nbsp;&nbsp;<button title="Imprimir" id="btnExport114" style="height: 34px;padding-top: 0;padding-bottom: 0;position:relative; top:0px" onclick="ImprimirRP114();"><img width="21" src="../Images/logo/print_.png"></button>';
-
+            
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Movimiento operacional de flota vehicular</h2>
+                </div>
+            </div>`; 
         } else if (codRP == 'RP115') {
             htmlOpcionReporte = '<i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>' +
                 `<input title="Fecha Inicio" type="text" class="datetimeRP115" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />` +
@@ -578,7 +651,7 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 `` +
                 `<button title="Procesar" type="button" id="Procesar" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">` +
                 `<i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i>
-                                     <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>`+
+                <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>`+
                 '</button>';
             //onclick="informeReporte('${codRP}');"
             //'<i title="Tipo" style="font-size:20px;" class="fa fa-filter inf" aria-hidden="true"></i>' +
@@ -589,11 +662,27 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte115();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport115" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP115();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Matriz Operacional Unidad</h2>
+                </div>
+            </div>`; 
         } else if (codRP == 'RP116') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin116" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select  class="selectRuta116 selectReporte" id="selectRuta116" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;';
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte116();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport116" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP116();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Mapeo Operacional Persona </h2>
+                </div>
+            </div>`;
+
+
 
         } else if (codRP == 'RP117') {
             htmlOpcionReporte = '&nbsp;<i title="Fecha Fin" class="fa fa-calendar inf tooltipstered" aria-hidden="true" style="font-size: 15px; position: relative; top: 1px; cursor: pointer; margin-left: 10px;"></i>&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin117" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
@@ -601,65 +690,143 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '&nbsp;&nbsp;&nbsp;&nbsp;<strong>Padron:&nbsp;&nbsp;</strong><select id="selectPadron117" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '&nbsp;<select class="selectSituacionEmpresa85" id="selSituacion117" style="width:250px !important" ></select>';
 
-
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte117();" style=height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport117" class="inf tooltipstered" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP117();"><img width="21" src="../Images/logo/print_.png"></button>';
 
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte mapeo producción mensual x unidad</h2>
+                </div>
+            </div>`;  
         } else if (codRP == 'RP118') {
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin118" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select  class="selectRuta118 selectReporte" id="selectRuta118" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte118();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP118();"><img width="21" src="../Images/logo/print_.png"></button>';
+            
+            // htmlOpcionReporte += 
+            // `<div style="float: right; position: relative; top: -10px;">
+            //     <div id="DivlblTitulo">
+            //         <h2 id="lblTitulo"></h2>
+            //     </div>
+            // </div>`;
         } else if (codRP == 'RP119') {
             htmlOpcionReporte = '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado119"><option value="A">A</option><option value="B">B</option></select>' +
                 '<strong>Ruta:&nbsp;&nbsp;</strong><select  class="selectRuta119 selectReporte" id="selectRuta119" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte119();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport119" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP119();"><img width="21" src="../Images/logo/print_.png"></button>';
+            
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción por hora</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP120') { //Distribución general de unidades ----------------
             htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta120 selectReporte" id="selectRuta120" style="margin-left: 9px;width:150px;"></select>';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte120();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport120" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP120();"><img width="21" src="../Images/logo/print_.png"></button>';
-
+            
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Indicadores Operacionales Diario</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP121') { //Indicadores Operacionales Diario ----------------
             htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta121 selectReporte" id="selectRuta121" style="margin-left: 9px;width:150px;"></select>' +
                 '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado121"><option value="A">A</option><option value="B">B</option></select>';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte121();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport121" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP121();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Distribucion general de unidades</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP122') { //Velocidad promedio por control
             htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta122 selectReporte" id="selectRuta122" style="margin-left: 9px;width:150px;"></select>' +
                 '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado122"><option value="A">A</option><option value="B">B</option></select>';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte122();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport122" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP122();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Velocidad promedio de control</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP123') { //Reporte consolidado mensual de vueltas 
 
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin123" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;Ruta<select  class="selectRuta123 selectReporte" id="selectRuta123" style="margin-left: 9px;width:150px;"></select>';
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte123();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP123();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte consolidado mensual de vueltas</h2>
+                </div>
+            </div>`;
+
         } else if (codRP == 'RP124') { //Operatividad Vehicular por dia
             htmlOpcionReporte = '<strong>Ruta:&nbsp;&nbsp;</strong><select  class="selectRuta124 selectReporte" id="selectRuta124" style="margin-left: 9px;width:150px;"></select>';
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte124();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP124();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Operatividad vehicular por día</h2>
+                </div>
+            </div>`;
+
         } else if (codRP == 'RP125') { //matriz de produccion vehicular por conductor
             htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin125" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
                 '<select  class="selectRuta125 selectReporte" id="selectRuta125" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte125();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport125" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP125();"><img width="21" src="../Images/logo/print_.png"></button>';
-        } else if (codRP == 'RP126') {
 
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de incidencias POD</h2>
+                </div>
+            </div>`;
+            
+        } else if (codRP == 'RP126') {
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte126();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport126" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP126();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de producción propietario</h2>
+                </div>
+            </div>`;
+
         } else if (codRP == 'RP127') { //Velocidad promedio por control
             htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta127 selectReporte" id="selectRuta127" style="margin-left: 9px;width:150px;"></select>' +
                 '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado127"><option value="A">A</option><option value="B">B</option></select>';
 
             htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte127();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
                 '&nbsp;<button title="Imprimir" id="btnExport127" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP127();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Velocidad promedio controles por hora</h2>
+                </div>
+            </div>`;
+            
         } else if (codRP == 'RP128') { //Incidencia Unidad Conductor
             htmlOpcionReporte = '<div style="float: left; margin-bottom:1em" class="margenDivParametros" >' +
                 '<i title="Entidad" class="fa fa-user medium tooltipstered " style="margin-right:5px;margin-top:0px;top: 60px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;"></i>' +
@@ -689,6 +856,13 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '<img src="../Images/icoExcel.png" />' +
                 '</button>' +
                 '</div>';
+                
+            htmlOpcionReporte += 
+                `<div style="margin-top: 10px; float: right; position: relative; top: -10px;">
+                    <div id="DivlblTitulo">
+                        <h2 id="lblTitulo">Reporte de Incidencia por Dispositivo</h2>
+                    </div>
+                </div>`;
 
             htmlOpcionReporte += '';
         } else if (codRP == 'RP129') { //Incidencia Unidad Conductor
@@ -724,11 +898,15 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '</button>' +
                 '</div>';
 
-            htmlOpcionReporte += '';
+                htmlOpcionReporte += 
+                `<div style="float: right; position: relative; top: -10px;">
+                    <div id="DivlblTitulo">
+                        <h2 id="lblTitulo">Reporte de vueltas por unidad</h2>
+                    </div>
+                </div>`;
 
         } else if (codRP == 'RP130') { // Reporte liquidación
-            htmlOpcionReporte =
-                '<div style="float: left; margin:0" class="margenDivParametros" >' +
+            htmlOpcionReporte = '<div style="float: left; margin:0" class="margenDivParametros" >' +
                 '<i class="fas fa-chart-line"></i>' +
                 `<select id="selTipoEntidad${codRP}"  onchange="Limpiar${codRP}(1,1)" style="margin-left: 10px">` +
                 '</select>' +
@@ -754,14 +932,20 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 '<i id="iconCargarRP130" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">' +
                 '</i>' +
                 '</button>' +
+
                 '<button id="btnExcel" title="Exportar a Excel" onclick="exportarDetalleRP130();" style="position: relative; top: -2px;">' +
                 '<img src="../Images/icoExcel.png" />' +
                 '</button>' +
-                '</div>' + `<div style="float: right; position: relative; top: -10px;"><div id="DivlblTitulo"><h2 id="lblTitulo">Reporte para liquidación de subsidio</h2></div>
-            </div>`;
+                '</div>';
 
             //htmlOpcionReporte = ''
             htmlOpcionReporte += `<button title="Imprimir" id="btnImprimir${codRP}" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="Imprimir130('${codRP}');"><img width="21" src="../Images/logo/print_.png"></button>`;
+
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Reporte para liquidación de subsidio</h2>
+                                        </div>
+                                    </div>`;
 
         } else if (codRP == 'RP132') { // Reporte liquidación 
             htmlOpcionReporte = `
@@ -786,8 +970,15 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                         <img src="../Images/icoExcel.png" />
                     </button>
                 </div>`;
+            
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de Análisis de Cumplimiento Predeterminado</h2>
+                </div>
+            </div>`;
 
-            htmlOpcionReporte += ``;
+
         } else if (codRP == 'RP133') { // Reporte liquidación 
             htmlOpcionReporte = `
                 <div style="float: left; margin:0" class="margenDivParametros">
@@ -803,6 +994,13 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                         <img src="../Images/icoExcel.png" />
                     </button>
                 '</div>`;
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de Unidades Reprogramadas por Dia</h2>
+                </div>
+            </div>`;
 
             htmlOpcionReporte += ``;
         } else if (codRP == 'RP134') { // Reporte liquidación 
@@ -828,6 +1026,13 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                         <img src="../Images/icoExcel.png" />
                     </button>
                 '</div>`;
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Contador de Pasajeros</h2>
+                </div>
+            </div>`;
 
             htmlOpcionReporte += ``;
         } else if (codRP == 'RP135') { // Reporte liquidación 
@@ -857,18 +1062,18 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                     </button>
                 </div>`;
 
-
-            htmlOpcionReporte += ``;
+                htmlOpcionReporte += 
+                `<div style="float: right; position: relative; top: -10px;">
+                    <div id="DivlblTitulo">
+                        <h2 id="lblTitulo">Reporte de Demanda de Unidades por Paradero</h2>
+                    </div>
+                </div>`;
         } else if (codRP == 'RP136') { // Reporte liquidación 
             //CajunCajun_me_muero
             htmlOpcionReporte = `
                 <div style="float: left; margin:0" class="margenDivParametros">
-                    <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
-                    <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
-
-                    <i title="Fecha Final" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
-                    <input title="Fecha Final" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-final-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActual}" readonly />
-
+                    <i title="Fecha" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
 
                     <i title="Ruta" class="fas fa-road" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
                     <select id="select-filtro-ruta-${codRP}">
@@ -894,7 +1099,12 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                     </button>
                 </div>`;
 
-            htmlOpcionReporte += ``;
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de Producción de Boletos Niubiz por Paradero</h2>
+                </div>
+            </div>`;
         } else if (codRP == 'RP137') { // NUEVO REPORTE PARADEROS Y TURNOS
             //CajunCajun_me_muero
             htmlOpcionReporte = `
@@ -916,41 +1126,43 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                     <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
                         <img src="../Images/icoExcel.png" />
                     </button>
-                </div>
-                <div style="margin-top: -6px !important;" id="DivlblTitulo">
-                    <h2 id="lblTitulo">Consultas y Reportes</h2>
-                </div>
-                `;
+                </div>`;
 
             htmlOpcionReporte += `
-                <div id="dialogExportExcel" display="none" style="margin-bottom=0">
+                <div id="dialogExportExcel" display="none">
                     <div class="margenTopParaModal" style="text-align:center;" role="form">
                         <div class="row" style="margin-bottom:10px">
                             <span>Fecha Inicio: </span>
-                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 21px;"></i>
-                            <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-inicio-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:4px" value="${fechaActualMenos7}" readonly />
+                            <input type="text" style="width: 0; height: 0; top: -100px; position: absolute;"/>
+                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                            <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-inicio-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
                         </div>
                         
                         <div class="row" style="margin-bottom:10px">
                             <span>Fecha Fin: </span>
-                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 36px;"></i>
-                            <input title="Fecha Fin" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-fin-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:4px" value="${fechaActualMenos7}" readonly />
+                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                            <input title="Fecha Fin" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-fin-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
                         </div>
-
-                        <button onclick="cargarExpoRP137('${codRP}')" style="margin-top:10px">Generar Excel</button>
-                        
-                        <div id="Progress_Status" style="display:none;margin-top: 12px;">
+                        <button onclick="cargarExpoRP137('${codRP}')">Generar Excel</button>
+                        <div id="Progress_Status" style="display:none;margin-top: 10px;">
                             <div id="myprogressBar"></div>
                         </div>
                     </div>
                 </div>`;
+
+            htmlOpcionReporte += 
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Reporte de Producción por Paraderos por Salida</h2>
+                </div>
+            </div>`;
         }
-        // <i class="fas fa-route" style="margin-left:10px"></i>
+        //<i class="fas fa-route" style="margin-left:10px"></i>
         //    <select id="selectViajes${codRP}" style="margin-left:5px" onchange="Limpiar${codRP}(1,1)">
         //        <option value="1">Vueltas Totales</option>
         //        <option value="0">Vueltas Subsidios</option>
         //    </select>` +
-        // --------------------------------------------------------------------------------------**------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------**------------------------------------------------------------------------------------------------
 
         arrCodReporte.push(codReporte);
         var codigoReporte = nombreReport.split('_')[0];
@@ -960,7 +1172,15 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
         //inicializando parametros 
         $('#tabReportes ul').append('<li title="' + nombreReporte + '" ><a href="#tabs-' + numTabs + '">' + codigoReporte + '</a><span onClick="cerrarTab(' + numTabs + ',$(this),' + codReporte + ')" style="position: absolute;right: 0px;top: -5px;cursor:pointer;" class="ui-closable-tab"><i style="font-size: 18px;position: absolute;right: -2px;top: 3px;" class="medium material-icons" >cancel</i></span></li>');
         Url = '<div id="tabs-' + numTabs + '" >' +
-            '<div id="divParametros" class="sombraFueraDeMapa1" style="display: flex; vertical-align: middle; box-shadow: 0 0 20px 0 rgba(0,0,0,0.6);padding-top: ' + (codRP == 'RP128' ? '' : '11px;') + 'padding-left: 20px;" >' +
+            '<div id="divParametros" class="sombraFueraDeMapa1" style="display: flex; box-shadow: 0 0 20px 0 rgba(0,0,0,0.6);padding-top: ' + (codRP == 'RP128' ? '' : '11px;') + 'padding-left: 20px;" >' +
+
+            // FECHA DE REPORTE 112
+
+            (reportesNuevos.includes(codRP) ? '' : '<strong><i style="margin-top: 6px;" title="Fecha" class="medium material-icons dp48 inf" style="position: relative;top: 4px;cursor:pointer">date_range</i>&nbsp;</strong><input  class="datetime' + codigoReporte + '" style="margin-top: 2px; margin-left: 4px; margin-right: 8px; width: 108px;height:28px;" id="busqueda' + numTabs + '" type="text" placeholder="Busqueda">' +
+            '&nbsp;') +
+
+            // RESTO DE FILTROS Y BOTONES 
+
             `${reportesNuevos.includes(codRP) ?
                 `<div style="float:right; margin-top: 0px; z-index: 50; position: relative;">
                         <div id="divInputBusqueda${codRP}" class="content-input-busqueda">
@@ -974,19 +1194,16 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                         </div>
                     </div>` : ''}` +
 
-            // HEADER RP112 FILTROS, FECHAS
-
-            (reportesNuevos.includes(codRP) ? '' : '<strong style="margin-top: 2px;"><i title="Fecha" class="medium material-icons dp48 inf" style="position: relative;top: 4px;cursor:pointer">date_range</i>&nbsp;</strong><input class="datetime' + codigoReporte + '" style="width: 108px;height:28px; margin-top: 2px; margin-left: 4px" id="busqueda' + numTabs + '" type="text" placeholder="Busqueda">' + '&nbsp;') +
-
-            '<div style="float:left; width: 99%" class="margenDivParametros1">' +
+            '<div style="float:left;width: 99%" class="margenDivParametros1">' +
+            
 
             htmlOpcionReporte +
             '&nbsp;<button style="display:' + (reportesNuevos.includes(codRP) ? 'none' : '') + ';height: 31px;padding-top: 0;padding-bottom: 0;" id="BtnInforme' + codigoReporte + '" onClick="informeReporte(' + '\'' + codigoReporte + '\');" >Procesar</button>' + //Procesar_XD
             //'<input style="margin: 0px 10px;width: 220px;height: 31px;padding-top: 0;padding-bottom: 0;" id="LeInputBuscadorSawesoUwu'+codigoReporte+'" onkeyup="+FUN_Buscar()+" placeholder="Búscar"></input>' +
-
-            '</div>' ;
+            '</div>' 
             
-            htmlOpcionReporte2 +
+            
+            + htmlOpcionReporte2 +
             '</div>' +
             '<div  style="position:absolute;top:106px;left:0;right:0;bottom:0px;padding:0.5em" >' +
             // (codRP == 'RP65' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp65" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp65" style="display: none;"><table id="Rp65Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
@@ -1197,7 +1414,6 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
             loadReport(codRP);
         } else if (codRP == 'RP78') {
             cargarDataUnidadesConSalida(ObjUtil.ObtenerFechaActual());
-
         } else if (codRP == 'RP84') {
             //$('#busquedaFinRp84').datepicker({
             //    dateFormat: 'dd/mm/yy',
@@ -1677,17 +1893,17 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                     var mesActual = Number(fechaActual.split('/')[1]);
 
                     strSelectMes = '<option value="1">ENERO</option>' +
-                                    '<option value="2">FEBRERO</option>' +
-                                    '<option value="3">MARZO</option>' +
-                                    '<option value="4">ABRIL</option>' +
-                                    '<option value="5">MAYO</option>' +
-                                    '<option value="6">JUNIO</option>' +
-                                    '<option value="7">JULIO</option>' +
-                                    '<option value="8">AGOSTO</option>' +
-                                    '<option value="9">SETIEMBRE</option>' +
-                                    '<option value="10">OCTUBRE</option>' +
-                                    '<option value="11">NOVIEMBRE</option>' +
-                                    '<option value="12" >DICIEMBRE</option>';
+                        '<option value="2">FEBRERO</option>' +
+                        '<option value="3">MARZO</option>' +
+                        '<option value="4">ABRIL</option>' +
+                        '<option value="5">MAYO</option>' +
+                        '<option value="6">JUNIO</option>' +
+                        '<option value="7">JULIO</option>' +
+                        '<option value="8">AGOSTO</option>' +
+                        '<option value="9">SETIEMBRE</option>' +
+                        '<option value="10">OCTUBRE</option>' +
+                        '<option value="11">NOVIEMBRE</option>' +
+                        '<option value="12" >DICIEMBRE</option>';
 
                     $('#selMes' + codRP + '').empty();
                     $('#selMes' + codRP + '').append(strSelectMes);
@@ -2123,7 +2339,7 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
                 })
                 selectRuta.innerHTML = option;
             }
-            //SENTIDOO
+            ///////SENTIDOO
             const ListarSentido = async () => {
                 const Data = {
                     Procedimiento: 'ProcRecorridoV1',
@@ -2191,6 +2407,7 @@ async function cargaReporte(tr, codReporte, nombreReport, codRP) {
 function agregarBuscador(codRP) {
     $('#btnBusquedaTabla' + codRP).click(function () {
         $('#txtBuscar' + codRP).val('');
+
         if ($('#divInputBusqueda' + codRP).hasClass('active')) {
             $('#divInputBusqueda' + codRP).removeClass('active');
             $('#divInputBusqueda' + codRP).css('width', '39px');
@@ -2245,7 +2462,7 @@ function verificaSesion() {
 
 function informeReporte(codigoReporte) {
     if (reportesNuevos.includes(codigoReporte)) {
-        $('#iframeReporte' + codigoReporte).css('display', 'none');
+        $('#iframeReporte' + codigoReporte).css('display', 'none')
     } else {
 
         ObjUtil.BloquearPantalla();
@@ -2253,10 +2470,11 @@ function informeReporte(codigoReporte) {
         $('#iframeReporte' + codigoReporte).on('load', function () {
             ObjUtil.DesbloquearPantalla();
         });
-    };
+    }
 
     switch (codigoReporte) {
         case 'RP78':
+
             if (!$('#selectSalidas').val()) {
                 ObjUtil.MostrarMensaje("No existen salidas para la unidad " + $("#selectUnidadesConSalida option:selected").text(), 0);
                 ObjUtil.DesbloquearPantalla();
@@ -2264,7 +2482,6 @@ function informeReporte(codigoReporte) {
                 $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&CodigoSalida=' + $('#selectSalidas').val());
             }
             break;
-
         case 'RP82':
 
             var fInicio = $('.datetimeRP82').val();
@@ -2390,6 +2607,7 @@ function informeReporte(codigoReporte) {
             }
             cargarRP111();
             break;
+
         case 'RP112':
             cargarRP112();
             //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
@@ -3122,8 +3340,12 @@ function ImprimirRP112() {
     opcionesCampo = {
         totalAgrupado: 0,
     }
+
     tablaconsulta = "Rp112Imp";
+
+
     ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+    // console.log(ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, ''))
 }
 function ImprimirRP114() {
     var FechaInicio = $('#fecha-inicio-114').val();
