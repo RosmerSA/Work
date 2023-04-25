@@ -1,0 +1,3404 @@
+var arrCodReporte = [];
+var NROPADRON = null;
+var PLACA = null;
+var LADO = null;
+var HSALIDA = null;
+var CODRECORRIDO = null;
+var RUTA = null;
+const reportesNuevos = ['RP27', 'RP52', 'RP56', 'RP65', 'RP114', 'RP115', 'RP128', 'RP129', 'RP130', 'RP132', 'RP133', 'RP134', 'RP135', 'RP136', 'RP137']
+
+function listaCuadreCaja(CodRecaudoBoleto, FechaInicio, FechaFin,
+    CodCajaGestionRecaudador, CodCajaGestionConductor,
+    CodEstado, CodSucursal, Indice) {
+
+    var Url = NombreAplicacion + '/./ReporteBoleto/getListaCuadreCaja';
+    Data = {
+        CodRecaudoBoleto: parseInt(CodRecaudoBoleto),
+        FechaInicio: FechaInicio,
+        FechaFin: FechaFin,
+        CodCajaGestionRecaudador: CodCajaGestionRecaudador,
+        CodCajaGestionConductor: CodCajaGestionConductor,
+        CodEstado: CodEstado,
+        CodSucursal: CodSucursal,
+        Indice: Indice
+    };
+    $.post(Url, Data, function (Datos) {
+
+        var JSONtabla0 = $.parseJSON(Datos.split('_')[0]);
+        var JSONtabla1 = $.parseJSON(Datos.split('_')[1]);
+        var JSONtabla2 = $.parseJSON(Datos.split('_')[2]);
+
+        $.each(JSONtabla1, function (i) {
+
+            var row = $('<tr />');
+            $("<td />").text((i + 1)).appendTo(row);
+            $("<td />").text(this.FechaHora).appendTo(row);
+            $("<td />").text(this.Documento).appendTo(row);
+            $("<td />").text(this.Unidad).appendTo(row);
+            $("<td />").text(this.Conductor).appendTo(row);
+            $("<td />").text('').appendTo(row);
+            $("<td />").text('').appendTo(row);
+            $("<td />").text(this.Importe).appendTo(row);
+            tbCuadreCajaBody.append(row);
+
+        });
+
+    });
+}
+
+
+function ListaCuadreLiquidacion() {
+    listaCuadreCaja(0, '', '', 2, 0, 0, 0, 90);
+}
+
+function ProcRecaudoBoletoReporte(Url, CodRecaudoBoleto, FechaInicio, FechaFin,
+    CodCajaGestionRecaudador, CodCajaGestionConductor,
+    CodEstado, CodSucursal, Indice) {
+
+    Data = {
+        CodRecaudoBoleto: parseInt(CodRecaudoBoleto),
+        FechaInicio: FechaInicio,
+        FechaFin: FechaFin,
+        CodCajaGestionRecaudador: CodCajaGestionRecaudador,
+        CodCajaGestionConductor: CodCajaGestionConductor,
+        CodEstado: CodEstado,
+        CodSucursal: CodSucursal,
+        Indice: Indice
+    };
+
+    $.getJSON(Url, Data, function (Datos) {
+        if (Indice == 10) { // Lista para mantenimiento
+            tbReportesTbody.empty();
+            var contador = 1;
+            let strReportes = ''
+            $.each(Datos, function (i) {
+                //console.log(this)
+                var auxExisteRpEnPermiso = false;
+                auxExisteRpEnPermiso = $.inArray(this.CodigoReporte, arrPermisosRp);
+                if (auxExisteRpEnPermiso > -1) {
+                    strReportes += `
+                                    <tr class="colorear" id="trReporte${this.CodReporte}" onClick="cargaReporte($(this),${this.CodReporte},'${this.CodigoReporte}_${this.TituloReporte}_${this.NomReporte}','${this.CodigoReporte}')">
+                                        <td>${contador++}</td>
+                                        <td>${this.CodigoReporte}</td>
+                                        <td>${this.TituloReporte}</td>
+                                        <td>${this.Descripcion}</td>
+                                        <td style="padding-left:43px"><i id="vistaPrevia${this.CodReporte}" title="" style="font-size:30px" class="fas fa-image " aria-hidden="true"></i></td>
+                                    </tr>
+                                    `
+                }
+            });
+            tbReportesTbody.append(strReportes);
+
+            Datos.map(function (data) {
+                var auxExisteRpEnPermiso = false;
+                auxExisteRpEnPermiso = $.inArray(data.CodigoReporte, arrPermisosRp);
+                if (auxExisteRpEnPermiso > -1) {
+                    //$(`#vistaPrevia${data.CodReporte}`).tooltip({
+                    //    content: `<img style="width:300px" src="https://ssteev.gob.mx/wp-content/uploads/2021/11/mantenimiento.jpg" />`,
+                    //    position: {
+                    //        my: "center bottom-40",
+                    //    },
+                    //    open: function (event, ui) {
+                    //        ui.tooltip.css("max-width", "500px");
+                    //        ui.tooltip.css("background", "#dddddd");
+                    //    },
+                    //});
+                    $(`#vistaPrevia${data.CodReporte}`).tooltip({
+                        content: `<img style="width:400px" src="${data.ImagenReporte}" />`,
+                        position: {
+                            my: "center bottom-40",
+                        },
+                        open: function (event, ui) {
+                            ui.tooltip.css("max-width", "500px");
+                            ui.tooltip.css("background", "#dddddd");
+                        },
+                    });
+
+                }
+            })
+
+        }
+        else if (Indice == 76) { //Lista para mantenimiento
+            tbSalidaUnidad.empty();
+            $('#tbSalidaUnidad2 tbody').empty();
+            $.each(Datos, function (i) {
+                var row = $('<tr onClick="obtenerPoisicionDeTransact(' + this.CodSalida + ',$(this)' + ');" />');
+                var row2 = $('<tr onClick="obtenerPoisicionDeTransact(' + this.CodSalida + ',$(this)' + ');" />');
+                $("<td />").text((i + 1)).appendTo(row);
+                $("<td />").text(this.FechaSalida).appendTo(row);
+                $("<td />").text(this.PadronUnidad).appendTo(row);
+                $("<td />").text(this.PlacaUnidad).appendTo(row);
+                $("<td />").text(this.Persona).appendTo(row);
+                $("<td data-codRecorrido='" + this.CodRecorrido + "' />").text(this.NomRuta).appendTo(row);
+                $("<td />").text(this.Lado).appendTo(row);
+                $("<td />").text(this.FechaHoraInicio).appendTo(row);
+                $("<td />").text(this.FechaHoraFin == null ? '' : this.FechaHoraFin).appendTo(row);
+                $("<td style='text-align:right;' />").text((this.Produccion == null || this.Produccion == '' ? (0).toFixed(2) : this.Produccion.toFixed(2))).appendTo(row);
+                $("<td style='display:none;' />").text(this.CodRecorrido).appendTo(row);
+                tbSalidaUnidad.append(row);
+                $('#iconCargar').css('display', 'none');
+
+                $("<td />").text((i + 1)).appendTo(row2);
+                $("<td />").text(this.FechaSalida).appendTo(row2);
+                $("<td />").text(this.PadronUnidad).appendTo(row2);
+                $("<td />").text(this.PlacaUnidad).appendTo(row2);
+                $("<td />").text(this.Persona).appendTo(row2);
+                $("<td data-codRecorrido='" + this.CodRecorrido + "' />").text(this.NomRuta).appendTo(row2);
+                $("<td />").text(this.Lado).appendTo(row2);
+                $("<td />").text(this.FechaHoraInicio).appendTo(row2);
+                $("<td />").text(this.FechaHoraFin == null ? '' : this.FechaHoraFin).appendTo(row2);
+                $("<td style='text-align:right;' />").text((this.Produccion == null || this.Produccion == '' ? (0).toFixed(2) : this.Produccion.toFixed(2))).appendTo(row2);
+                $('#tbSalidaUnidad2 tbody').append(row2);
+                $('#iconCargar').css('display', 'none');
+            });
+        } else if (Indice == 77) { //Obtiene puntos de transaccion Latitud Longitud
+            //ObjUtil.GuardarJson(Datos, "jsonData");
+            var latitudPos = 0
+            var longitudPos = 0
+            var cantidadTransacciones = 0;
+
+            listaRecorrido(CODRECORRIDO, 2);
+            ListarControles(CODRECORRIDO)
+
+            if (Datos.length == 0) {
+                ObjUtil.MostrarMensaje("No se encontraron datos", 0);
+                return;
+            }
+            if (arrMarcador.length > 0) {
+                clearOverlays(arrMarcador);
+            }
+            $.each(Datos, function (i) {
+                if (i == 0) {
+                    latitudPos = this.Latitud;
+                    longitudPos = this.Longitud;
+                }
+                arrMarcador[i + 1] = ObjSuperposicion.CrearMarcador(parseFloat(this.Latitud), parseFloat(this.Longitud), '../Images/iconos/iconoPersona.png', 'Boleto: ' + this.NomBoleto + ' \nHora Transaccion: ' + this.HoraTransaccion, false);
+                /*Label para el sentido alado de marcador*/
+                // arrDivParaSentido[i + 1] = ObjSuperposicion.CrearDiv(this.Latitud, (this.Longitud - 0.030000), '<div style="color:white;background-color:#0961A2;border-radius:10px">&nbsp;' + '<i class="medium material-icons dp48" >arrow_downward</i>' + '</div>', false, i + 1);
+
+                cantidadTransacciones++;
+            });
+
+            var position = new google.maps.LatLng(latitudPos, longitudPos);
+            DivMapaTransaction.dialog({
+                //title: '[' + NROPADRON + ' ' + PLACA + '] Detalle salida Ruta ' + RUTA + ' lado ' + LADO + ', hora inicio : ' + HSALIDA
+                title: '[' + NROPADRON + ' ' + PLACA + '] '
+            });
+
+            $('#lblCantidadTransacciones').text(cantidadTransacciones);
+            DivMapaTransaction.dialog('open');
+            map.panTo(position);
+            google.maps.event.trigger(map, 'resize');
+            map.panTo(position);
+            map.setZoom(12);
+
+        } else if (Indice == 79) {
+
+            $('#selectUnidadesConSalida').empty();
+            ObjUtil.CargarSelect(Datos, $('#selectUnidadesConSalida'));
+
+            if ($('#selectUnidadesConSalida').val() != null) {
+                cargarSalidas($('.datetimeRP78').val(), $('#selectUnidadesConSalida').val());
+            }
+
+            if ($('#selectUnidadesConSalida')[0].options.length == 0) {
+                $('#BtnInformeRP78').attr('disabled', 'disabled');
+            } else {
+                $("#BtnInformeRP78").removeAttr("disabled");
+            }
+        }
+
+        else if (Indice == 80) {
+
+            $('#selectSalidas').empty();
+            ObjUtil.CargarSelect(Datos, $('#selectSalidas'));
+        }
+
+        else if (Indice == 84) {
+            //console.log(Datos);
+            //return;
+            cargarDistribucion(Datos);//cargar distribucion OSM
+            return;
+
+
+            var latitud = 0;
+            var longitud = 0;
+
+            if (Datos.length == 0) {
+                ObjUtil.MostrarMensaje("No se encontraron datos", 0);
+                clearOverlays(arrMarcador);
+                return;
+            }
+            if (arrMarcador.length > 0) {
+                clearOverlays(arrMarcador);
+            }
+            $.each(Datos, function (i) {
+
+                if (i == 0) {
+                    latitudPos = this.Latitud;
+                    longitudPos = this.Longitud;
+                }
+                arrMarcador[i + 1] = ObjSuperposicion.CrearMarcador(parseFloat(this.Latitud), parseFloat(this.Longitud), '../Images/iconos/iconoPersona.png', 'Boleto: ' + this.NomBoleto + ' \nHora Transaccion: ' + this.HoraTransaccion, false);
+                cantidadTransacciones++;
+            });
+
+        } else if (Indice == 90) {
+            console.log('___________indice 90_________');
+            console.log(Datos);
+        }
+    });
+}
+
+function cargarDataUnidadesConSalida(fecha) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, 0, fecha, '', 0, 0, 0, 0, 79);
+}
+
+function cargarPuntosTransaccion(fechaInicio, FechaFin, CodRecorrido) { //para /ProduccionControl/Inicio
+
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, 0, fechaInicio, FechaFin, 0, 0, 0, CodRecorrido, 84);
+}
+
+function cargarSalidas(fecha, codUnidad) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, 0, fecha, '', codUnidad, 0, 0, 0, 80);
+}
+
+function listaReportes() {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, 0, '', '', 0, 0, 0, 0, 10);
+}
+
+function obtenerPoisicionDeTransact(codSalida, tr) {
+    if (EstadoMenu == 1) {
+        $('#DivSplit').click();
+    }
+    NROPADRON = tr[0].childNodes[2].innerText;
+    PLACA = tr[0].childNodes[3].innerText;
+    LADO = tr[0].childNodes[6].innerText;
+    HSALIDA = tr[0].childNodes[7].innerText;
+    RUTA = tr[0].childNodes[5].innerText;
+    CODRECORRIDO = tr[0].childNodes[10].innerText;
+    ObjUtil.MantenerSeleccion(tr[0].childNodes[0].innerText, 'tbSalidaUnidad');
+    transaccionBoletoReporte(codSalida);
+    ListarControles(CODRECORRIDO, 10); //idrecorrido :1 , subindice: 10
+
+}
+
+function transaccionBoletoReporte(codSalida) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, codSalida, '', '', 0, 0, 0, 0, 77);
+}
+
+function listaSalida(codRuta, fechaSalida) {
+    var Url = NombreAplicacion + '/./ReporteBoleto/RecaudoBoletoReporte';
+    ProcRecaudoBoletoReporte(Url, codRuta, fechaSalida, '', 0, 0, 0, 0, 76);
+}
+
+function hasDuplicates(array) {
+    var valuesSoFar = Object.create(null);
+    for (var i = 0; i < array.length; ++i) {
+        var value = array[i];
+        if (value in valuesSoFar) {
+            return true;
+        }
+        valuesSoFar[value] = true;
+    }
+    return false;
+}
+
+function verificaRepetido(array, codReporte) {
+
+    var respuesta = false;
+    for (i = 0; i < array.length; i++) {
+        if (array[i] == codReporte) {
+            respuesta = true;
+        }
+    }
+    return respuesta;
+}
+
+var numTabs = 2;
+var TIPO_CONSULTA = 1; //opcion ruta por default
+
+async function cargaReporte(tr, codReporte, nombreReport, codRP) {
+    tr.addClass('hoverReporteTr');
+
+    if (EstadoMenu == 1) {
+        $('#DivSplit').click();
+    }
+    if (!verificaRepetido(arrCodReporte, codReporte)) {
+
+        var htmlOpcionReporte = '';
+        var htmlOpcionReporte2 = '';
+        //valida el reporte para concatenar su html de busqueda;
+        if (codRP == 'RP27') {
+            htmlOpcionReporte =
+                `<div style="float: left; margin:0" class="margenDivParametros" >
+                    <i title="Fecha Inicio" class="far fa-calendar-alt" style=""></i>
+                    <input type="text" class="Fecha${codRP} form-control" id="fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <i title="Fecha Fin" class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP} form-control" id="fecha-fin-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <button title="Procesar" id="Procesar${codRP}" type="button" onclick="cargarRP27('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>
+                    </button>
+                    <button id="btn-exportar-${codRP}" title="Exportar a Excel" style="position: relative; top: 0px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Total de Viajes</h2>
+                                        </div>
+                                    </div>`;
+
+        } else if (codRP == 'RP52') {
+            htmlOpcionReporte =
+                `<div style="float: left; margin:0" class="margenDivParametros" >
+                    <i title="Fecha Inicio" class="far fa-calendar-alt" style=""></i>
+                    <input type="text" class="Fecha${codRP} form-control" id="fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <i title="Fecha Fin" class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP} form-control" id="fecha-fin-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <button title="Procesar" id="Procesar${codRP}" type="button" onclick="cargarRP52('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>
+                    </button>
+                    <button id="btn-exportar-${codRP}" title="Exportar a Excel" style="position: relative; top: 0px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Reporte de Inspectoria</h2>
+                                        </div>
+                                    </div>`;
+
+        } else if (codRP == 'RP56') {
+            htmlOpcionReporte =
+                `<div style="float: left; margin:0" class="margenDivParametros" >
+                    <i title="Fecha Inicio" class="far fa-calendar-alt" style=""></i>
+                    <select class="form-control" id="select-mes-${codRP}" style="width: 105px;margin-left:8px;background:#fff"></select>
+                    <i title="Fecha Fin" class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <select class="form-control" id="select-anio-${codRP}" style="width: 105px;margin-left:8px;background:#fff"></select>
+                    <button title="Procesar" id="Procesar${codRP}" type="button" onclick="cargarRP56('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>
+                    </button>
+                    <button id="btn-exportar-${codRP}" title="Exportar a Excel" style="position: relative; top: 0px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Reporte de Inspectoria</h2>
+                                        </div>
+                                    </div>`;
+
+        } else if (codRP == 'RP65') {
+            htmlOpcionReporte =
+                '<div style="float: left; margin:0" class="margenDivParametros" >' +
+                `<i class="fas fa-chart-line" style="margin-left: 10px"></i>              
+                    <select id="selectRuta${codRP}" style="margin-left: 5px"></select>
+                    <i class="fas fa-info-circle" style="margin-left: 10px"></i>
+                    <select id="selectEstado${codRP}" style="margin-left: 5px"></select>
+                    <i class="fas fa-user" style="margin-left: 10px"></i>          
+                    <select id="selectPersona${codRP}" style="margin-left: 5px;width:300px"></select>` +
+                '<button title="Procesar" id="Procesar' + codRP + '" type="button" onclick="informeReporte(' + '\'' + codRP + '\');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">' +
+                '<i id="iconCargar' + codRP + '" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">' +
+                '</i>' +
+                '</button>' +
+                '<button id="btnExcel" title="Exportar a Excel" onclick="exportarReporte65()" style="position: relative; top: 0px;">' +
+                '<img src="../Images/icoExcel.png" />' +
+                '</button>' +
+                `<button title="Imprimir" id="btnImprimir${codRP}" style="margin-left: 10px;height: 32px;padding-top: 0;padding-bottom: 0;" onclick="Imprimir('${codRP}');"><img width="21" src="../Images/logo/print_.png"></button>` +
+                '</div>';
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Merma detallada de boletos</h2>
+                                        </div>
+                                    </div>`;
+
+        } else if (codRP == 'RP78') {
+            htmlOpcionReporte = '<select id="selectUnidadesConSalida"><option>UNIDADES</option></select><select id="selectSalidas"></select>' +
+            `<div style="float: right; position: relative; top: -10px;">
+                <div id="DivlblTitulo">
+                    <h2 id="lblTitulo">Producción Global por Fechas</h2>
+                </div>
+            </div>`;
+
+        } else if (codRP == 'RP82') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp82" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte82();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport82" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP82();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+        } else if (codRP == 'RP83') {
+            htmlOpcionReporte = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioRuta83" type="radio" data-value="1" name="optradio83" checked="checked" >' +
+                '<select  class="selectRuta83 selectReporte83" id="selectRuta83" style="margin-left: 9px;width:150px;"></select>' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioUnidad83" type="radio"  data-value="2" name="optradio83">' +
+                '<select class="selectUnidad83 selectReporte83" id="selectUnidad83" style="margin-left: 9px;width:150px;"></select>' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioPersona83" type="radio"  data-value="3" name="optradio83">' +
+                '&nbsp;<select class="selectPersona83 selectReporte83" id="selectPersona83" style="width:250px !important" ></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte83();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport83" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP83();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP85') {
+
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioRuta" type="radio" data-value="1" name="optradio" checked="checked" >' +
+                '<select  class="selectRuta85 selectReporte" id="selectRuta" style="margin-left: 9px;width:150px;"></select>' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioUnidad" type="radio"  data-value="2" name="optradio">' +
+                '<select class="selectUnidad85 selectReporte" id="selectUnidad" style="margin-left: 9px;width:150px;"></select>' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input id="radioPersona" type="radio"  data-value="3" name="optradio">' +
+                '&nbsp;<select class="selectPersona85 selectReporte" id="selectPersona" style="width:250px !important" ></select>' +
+                '&nbsp;<select class="selectSituacionEmpresa85" id="selSituacion85" style="width:250px !important" ></select>'
+                ;
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte85();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport85" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP85();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP84') {
+            //htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin84" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+            //                        '<select  class="selectRuta84 selectReporte" id="selectRuta84" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+            htmlOpcionReporte = '<select  class="selectRuta84 selectReporte" id="selectRuta84" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte84();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport84" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP84();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP86') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp86" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select id="selectRutaRP86" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select id="selectRecorrido" style="margin-left: 9px;"></select>' +
+                '<select id="selectUnidadRP86" style="margin-left: 9px;"></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte86();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport86" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP86();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP89') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp89" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta89" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong>Recorrido:&nbsp;&nbsp;</strong><select id="selectRecorrido89" style="margin-left: 9px;"></select>' +
+                '<strong>Control:&nbsp;&nbsp;</strong><select id="selectControl89" style="margin-left: 9px;"></select>';
+
+        } else if (codRP == 'RP92') {
+            htmlOpcionReporte = '&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRutaRP92" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong style="display:none;">Unidad:&nbsp;&nbsp;</strong><select id="selectUnidadRP89" style="margin-left: 9px;display:none;"></select>';
+        } else if (codRP == 'RP95') {
+
+            htmlOpcionReporte = //'&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp95" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                //'<input style="width:65px;" type="text" id="txtHoraIniRP95" value="05:00" />&nbsp;:&nbsp;' +
+                //'<input style="width:65px;" type="text" id="txtHoraFinRP95" value="23:59" />' +
+                '<select id="selectRutaRP95"></select>' +
+                '&nbsp;&nbsp;<select id="selectLadoRP95"><option value="A">A</option><option value="B">B</option></select>';
+            //'&nbsp;&nbsp;<select id="selectUnidadRP95"></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte95();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport95" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP95();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP96') {
+
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" class="datetimerango" id="busquedaFinRp96" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select id="selectUnidadRP96" style="margin-left: 9px;display:none;"></select>&nbsp;&nbsp;' +
+                '<select id="selectRutaRP96"></select>&nbsp;&nbsp;' +
+                '&nbsp;&nbsp;<select id="selecteRecorridoRP96">';
+        } else if (codRP == 'RP111') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFinRp111" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta111" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong>Padron:&nbsp;&nbsp;</strong><input id="txtPadron111"></input>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte111();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' + '&nbsp;<button title="Imprimir" id="btnExport111" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP111();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+            htmlOpcionReporte += `<div style="float: right; position: relative; top: -10px;">
+                                        <div id="DivlblTitulo">
+                                            <h2 id="lblTitulo">Producción Global por Fechas</h2>
+                                        </div>
+                                    </div>`;
+
+        } else if (codRP == 'RP112') {
+            htmlOpcionReporte = '<div style=" display: flex; float: left; margin:0" class="margenDivParametros" >' +
+                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Ruta:&nbsp;&nbsp;</strong><select id="selectRuta112" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Mes:&nbsp;&nbsp;</strong>' +
+                '<select id="selectMes112" style="margin-left: 9px;">' +
+                '<option value="1">ENERO</option>' +
+                '<option value="2">FEBRERO</option>' +
+                '<option value="3">MARZO</option>' +
+                '<option value="4">ABRIL</option>' +
+                '<option value="5">MAYO</option>' +
+                '<option value="6">JUNIO</option>' +
+                '<option value="7">JULIO</option>' +
+                '<option value="8">AGOSTO</option>' +
+                '<option value="9">SEPTIEMBRE</option>' +
+                '<option value="10">OCTUBRE</option>' +
+                '<option value="11">NOVIEMBRE</option>' +
+                '<option value="12">DICIEMBRE</option>' +
+                '</select>' +
+                '<strong style="margin-top: 5px; margin-left: 4px; margin-right: -6px;">Año:&nbsp;&nbsp;</strong>' +
+                '<select id="selectAnio112" style="margin-left: 9px;">' +
+                '<option value="2016">2016</option>' +
+                '<option value="2017">2017</option>' +
+                '<option value="2018" selected>2018</option>' +
+                '<option value="2019">2019</option>' +
+                '<option value="2020">2020</option>' +
+                '<option value="2021">2021</option>' +
+                '<option value="2022">2022</option>' +
+                '<option value="2023">2023</option>' +
+                '</select>' +
+                '&nbsp;<select class="selectSituacionEmpresa85" id="selSituacion112" style="width:250px !important" ></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte112();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' + '&nbsp;<button title="Imprimir" id="btnExport112" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP112();"><img width="21" src="../Images/logo/print_.png"></button></div>' 
+            + `<div style="float: right; position: relative; top: -10px;">
+            <div id="DivlblTitulo">
+            <h2 id="lblTitulo">Producción vehicular mensual por boleto</h2>
+            </div></div>`;
+
+        } else if (codRP == 'RP113') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin113" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectRuta113 selectReporte" id="selectRuta113" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectUnidad113 selectReporte" id="selectUnidad" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+        } else if (codRP == 'RP114') {
+            htmlOpcionReporte = `<i title="Fecha Inicio" class="far fa-calendar-alt" style=""></i>
+                                <input type="text" class="Fecha${codRP}" form-control" id="fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>`
+            htmlOpcionReporte += '&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectRuta114 selectReporte" id="selectRuta114" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                `<button title="Procesar" type="button" id="Procesar" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;position: relative; top:2px">` +
+                `<i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i>
+                                        <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>`+
+                '</button>' +
+                '<button title="Exportar a Excel" id="btn-exportar-${codRP}" onclick="exportarReporte114()" style="position: relative; top: 1px;"><img src="../Images/icoExcel.png" /></button>' +
+                '&nbsp;&nbsp;&nbsp;<button title="Imprimir" id="btnExport114" style="height: 34px;padding-top: 0;padding-bottom: 0;position:relative; top:0px" onclick="ImprimirRP114();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+        } else if (codRP == 'RP115') {
+            htmlOpcionReporte = '<i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>' +
+                `<input title="Fecha Inicio" type="text" class="datetimeRP115" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />` +
+                '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin115" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<i title="Ruta" class="medium material-icons dp48 inf" style="position: relative; top: 4px; cursor: pointer; margin-left: 10px;">timeline</i>' +
+                '<select  class="selectRuta115 selectReporte" id="selectRuta115" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                `<section class="section-unidades${codRP}" style="display: inline-block;margin: 0 1rem 0 -5px">
+                                    <i class="fas fa-bus " style=""></i>
+                                    <select class="" id="selectUnidad${codRP}"></select>
+                                </section>`+
+                `` +
+                `<button title="Procesar" type="button" id="Procesar" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">` +
+                `<i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i>
+                                     <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>`+
+                '</button>';
+            //onclick="informeReporte('${codRP}');"
+            //'<i title="Tipo" style="font-size:20px;" class="fa fa-filter inf" aria-hidden="true"></i>' +
+            //'<select  class="selectTipo115 selectReporte" id="selectTipo115" style="margin-left: 9px;width:150px;">' +
+            //'<option value="1">UNIDAD</option>' +
+            //'<option value="2">CONDUCTOR</option>' +
+            //'</select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte115();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport115" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP115();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP116') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin116" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectRuta116 selectReporte" id="selectRuta116" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte116();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport116" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP116();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+        } else if (codRP == 'RP117') {
+            htmlOpcionReporte = '&nbsp;<i title="Fecha Fin" class="fa fa-calendar inf tooltipstered" aria-hidden="true" style="font-size: 15px; position: relative; top: 1px; cursor: pointer; margin-left: 10px;"></i>&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin117" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;<strong>Ruta:&nbsp;&nbsp;</strong><select id="selectRuta117" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '&nbsp;&nbsp;&nbsp;&nbsp;<strong>Padron:&nbsp;&nbsp;</strong><select id="selectPadron117" style="margin-left: 9px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '&nbsp;<select class="selectSituacionEmpresa85" id="selSituacion117" style="width:250px !important" ></select>';
+
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte117();" style=height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport117" class="inf tooltipstered" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP117();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+        } else if (codRP == 'RP118') {
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin118" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectRuta118 selectReporte" id="selectRuta118" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte118();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP118();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP119') {
+            htmlOpcionReporte = '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado119"><option value="A">A</option><option value="B">B</option></select>' +
+                '<strong>Ruta:&nbsp;&nbsp;</strong><select  class="selectRuta119 selectReporte" id="selectRuta119" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte119();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport119" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP119();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP120') { //Distribución general de unidades ----------------
+            htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta120 selectReporte" id="selectRuta120" style="margin-left: 9px;width:150px;"></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte120();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport120" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP120();"><img width="21" src="../Images/logo/print_.png"></button>';
+
+        } else if (codRP == 'RP121') { //Indicadores Operacionales Diario ----------------
+            htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta121 selectReporte" id="selectRuta121" style="margin-left: 9px;width:150px;"></select>' +
+                '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado121"><option value="A">A</option><option value="B">B</option></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte121();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport121" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP121();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP122') { //Velocidad promedio por control
+            htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta122 selectReporte" id="selectRuta122" style="margin-left: 9px;width:150px;"></select>' +
+                '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado122"><option value="A">A</option><option value="B">B</option></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte122();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport122" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP122();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP123') { //Reporte consolidado mensual de vueltas 
+
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin123" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;Ruta<select  class="selectRuta123 selectReporte" id="selectRuta123" style="margin-left: 9px;width:150px;"></select>';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte123();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP123();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP124') { //Operatividad Vehicular por dia
+            htmlOpcionReporte = '<strong>Ruta:&nbsp;&nbsp;</strong><select  class="selectRuta124 selectReporte" id="selectRuta124" style="margin-left: 9px;width:150px;"></select>';
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte124();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport118" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP124();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP125') { //matriz de produccion vehicular por conductor
+            htmlOpcionReporte = '&nbsp;-&nbsp;&nbsp;<input style="width: 108px;height:28px;border: 1px solid #AAAAAA;" id="busquedaFin125" type="text" />&nbsp;&nbsp;&nbsp;&nbsp;' +
+                '<select  class="selectRuta125 selectReporte" id="selectRuta125" style="margin-left: 9px;width:150px;"></select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte125();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport125" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP125();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP126') {
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte126();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport126" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP126();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP127') { //Velocidad promedio por control
+            htmlOpcionReporte = '&nbsp;&nbsp;<span>Ruta:&nbsp;&nbsp;&nbsp;&nbsp;</span><select  class="selectRuta127 selectReporte" id="selectRuta127" style="margin-left: 9px;width:150px;"></select>' +
+                '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado127"><option value="A">A</option><option value="B">B</option></select>';
+
+            htmlOpcionReporte += '&nbsp;&nbsp;<button onclick="exportarReporte127();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport127" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP127();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP128') { //Incidencia Unidad Conductor
+            htmlOpcionReporte = '<div style="float: left; margin-bottom:1em" class="margenDivParametros" >' +
+                '<i title="Entidad" class="fa fa-user medium tooltipstered " style="margin-right:5px;margin-top:0px;top: 60px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;"></i>' +
+                '<select id="selTipoEntidad" onchange="LimpiarTabla(1)">' +
+                '<option value="0">UNIDAD</option>' +
+                '<option value="1">CONDUCTOR</option>' +
+                '</select>' +
+                '<i title="Tipo de Busqueda" class="medium material-icons dp48 info tooltipstered " style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                `<select id="selTipoConsulta" onchange="TipoConsulta('selTipoConsulta','')">` +
+                '<option value="1">Mes</option>' +
+                '<option value="0">Rango de fechas</option>' +
+                '</select>' +
+                '<i title="Mes" class="medium material-icons dp48 info tooltipstered Mes" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<select class="Mes" id="selMes" onchange="LimpiarTabla(1)"></select>' +
+                '<i title="Año" class="medium material-icons dp48 info tooltipstered Mes" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<select class="Mes" id="selAño" onchange="FechaMesAño()"></select>' +
+                '<i title="Fecha Inicio" class="medium material-icons dp48 info tooltipstered RangoFecha" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<input type="text" class="RangoFecha" id="txtFechaInicio" autocomplete="off" style="width: 105px;margin-left:8px" value="' + fechaActualMenos7 + '" />' +
+                '<i title="Fecha Fin" class="medium material-icons dp48 info tooltipstered RangoFecha" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<input type="text" class="RangoFecha" id="txtFechaFin" autocomplete="off" style="width: 105px;margin-left:8px" value="' + fechaActual + '" />' +
+                '<button title="Procesar" id="Procesar" type="button" onclick="informeReporte(' + '\'' + codRP + '\');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">' +
+                '<i id="iconCargar" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">' +
+                '</i>' +
+                '</button>' +
+                '<input type="text" style="display: none" />' +
+                '<button id="btnExcel" title="Exportar a Excel" onclick="exportarDetalle();" style="position: relative; top: -2px;">' +
+                '<img src="../Images/icoExcel.png" />' +
+                '</button>' +
+                '</div>';
+
+            htmlOpcionReporte += '';
+        } else if (codRP == 'RP129') { //Incidencia Unidad Conductor
+
+            htmlOpcionReporte = '<div style="float: left; margin:0" class="margenDivParametros" >' +
+                '<i title="Entidad" class="fa fa-user medium tooltipstered " style="margin-right:5px;margin-top:0px;top: 60px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;"></i>' +
+                `<select id="selTipoEntidad${codRP}" onchange="searchUnit('${codRP}')">` +
+                '</select>' +
+                `<i class="fas fa-bus" style="margin-left:1rem"></i>
+                <select id="selectUnidad${codRP}"></select>` +
+                '<i title="Tipo de Busqueda" class="medium material-icons dp48 info tooltipstered " style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                `<select id="selTipoConsulta${codRP}" onchange="TipoConsulta('selTipoConsulta${codRP}','${codRP}')">` +
+                '<option value="1">Mes</option>' +
+                '<option value="0">Rango de fechas</option>' +
+                '</select>' +
+                '<i title="Mes" class="medium material-icons dp48 info tooltipstered Mes' + codRP + '" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                `<select class="Mes${codRP}" id="selMes${codRP}" onchange="LimpiarTabla(1,'${codRP}')"></select>` +
+                '<i title="Año" class="medium material-icons dp48 info tooltipstered Mes' + codRP + '" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<select class="Mes' + codRP + '" id="selAño' + codRP + '"></select>' +
+                '<i title="Fecha Inicio" class="medium material-icons dp48 info tooltipstered RangoFecha' + codRP + '" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<input type="text" class="RangoFecha' + codRP + '" id="txtFechaInicio' + codRP + '" autocomplete="off" style="width: 105px;margin-left:8px" value="' + fechaActualMenos7 + '" />' +
+                '<i title="Fecha Fin" class="medium material-icons dp48 info tooltipstered RangoFecha' + codRP + '" style="margin-top:6px;top: 68px;margin-left: 10px;cursor:pointer;position: relative; top: 2px;">date_range</i>' +
+                '<input type="text" class="RangoFecha' + codRP + '" id="txtFechaFin' + codRP + '" autocomplete="off" style="width: 105px;margin-left:8px" value="' + fechaActual + '" />' +
+                '<button title="Procesar" id="Procesar' + codRP + '" type="button" onclick="informeReporte(' + '\'' + codRP + '\');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">' +
+                '<i id="iconCargarRP129" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">' +
+                '</i>' +
+                '</button>' +
+                '<input type="text" style="display: none" />' +
+                '<button id="btnExcel" title="Exportar a Excel" onclick="exportarDetalleRP129();" style="position: relative; top: -2px;">' +
+                '<img src="../Images/icoExcel.png" />' +
+                '</button>' +
+                '<button id="btnResumen" title="Ver Resumen" onclick="verResumenRP129();" style="position: relative; top: -2px;margin-left:10px">Ver Resumen' +
+                '</button>' +
+                '</div>';
+
+            htmlOpcionReporte += '';
+
+        } else if (codRP == 'RP130') { // Reporte liquidación
+            htmlOpcionReporte =
+                '<div style="float: left; margin:0" class="margenDivParametros" >' +
+                '<i class="fas fa-chart-line"></i>' +
+                `<select id="selTipoEntidad${codRP}"  onchange="Limpiar${codRP}(1,1)" style="margin-left: 10px">` +
+                '</select>' +
+                '<i class="fas fa-chart-line" style="margin-left: 10px"></i>' +
+                `<select id="selLado${codRP}"  onchange="Limpiar${codRP}(1,1)" style="margin-left: 10px">` +
+                `<option value="0">Ambos</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>` +
+                '</select>' +
+                '<i class="far fa-calendar-alt" style="margin-left: 10px"></i>' +
+                '<input type="text" class="Fecha' + codRP + '" id="txtFechas' + codRP + '" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="' + fechaActualMenos1 + '" readonly/>' +
+                '<i class="fas fa-layer-group" style="margin-left:10px"></i>' +
+                `<select id="selectAgrupado${codRP}" style="margin-left:10px" onchange="Limpiar${codRP}(1,0)">
+                    <option value="1">Agrupado</option>                
+                    <option value="0">Detallado</option>
+                </select>` +
+                `<i class="fas fa-exchange-alt" style="margin-left:10px"></i>
+                <select id="selectEjecutado${codRP}" style="margin-left:8px" onchange="Limpiar${codRP}(1,1)">
+                    <option value="1">Ejecutado</option>
+                    <option value="0">Trunco</option>
+                </select>` +
+                '<button title="Procesar" id="Procesar' + codRP + '" type="button" onclick="informeReporte(' + '\'' + codRP + '\');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">' +
+                '<i id="iconCargarRP130" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">' +
+                '</i>' +
+                '</button>' +
+                '<button id="btnExcel" title="Exportar a Excel" onclick="exportarDetalleRP130();" style="position: relative; top: -2px;">' +
+                '<img src="../Images/icoExcel.png" />' +
+                '</button>' +
+                '</div>' + `<div style="float: right; position: relative; top: -10px;"><div id="DivlblTitulo"><h2 id="lblTitulo">Reporte para liquidación de subsidio</h2></div>
+            </div>`;
+
+            //htmlOpcionReporte = ''
+            htmlOpcionReporte += `<button title="Imprimir" id="btnImprimir${codRP}" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="Imprimir130('${codRP}');"><img width="21" src="../Images/logo/print_.png"></button>`;
+
+        } else if (codRP == 'RP132') { // Reporte liquidación 
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP}" id="txt-fecha-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <i class="fas fa-exchange-alt" style="margin-left:10px"></i>
+                    <select id="select-tipo-consulta-${codRP}" style="margin-left:8px">
+                        <option value="0">Detallado</option>
+                        <option value="1">Consolidado</option>
+                    </select>
+
+                    <label class="contable" style="display: none" for="checkbox">Contable</label>
+                    <input class="contable" id="checkContable" style="display: none" type="checkbox" id="checkbox" onclick="mostrarContable('${codRP}')"/>
+
+                    <button title="Procesar" type="button" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" onclick="exportarReporte132()" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+
+            htmlOpcionReporte += ``;
+        } else if (codRP == 'RP133') { // Reporte liquidación 
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP}" id="txt-fecha-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+
+                    <button title="Procesar" type="button" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                '</div>`;
+
+            htmlOpcionReporte += ``;
+        } else if (codRP == 'RP134') { // Reporte liquidación 
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP}" id="txt-fecha-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <i class="far fa-calendar-alt" style="margin-left: 10px"></i>
+                    <input type="text" class="Fecha${codRP}" id="txt-fecha-fin-${codRP}" autocomplete="off" style="width: 105px;margin-left:8px;background:#fff" value="${fechaActual}" readonly/>
+                    <input id="radio-ruta-${codRP}" type="radio" data-value="1" name="optradio" checked="checked" >
+                    <select  class="selectRuta134 selectReporte134" id="select-ruta-${codRP}" style="margin-left: 9px;width:150px;"></select>
+                    <input id="radio-unidad-${codRP}" type="radio"  data-value="2" name="optradio" style="display:none">
+                    <select class="selectUnidad134 " id="select-unidad-${codRP}" style="margin-left: 9px;width:150px; display:none!important"></select>
+                    <input id="radio-persona-${codRP}" type="radio"  data-value="3" name="optradio" style="display:none">
+                    <select class="selectPersona134 " id="select-persona-${codRP}" style="width:250px !important; display:none!important" ></select>
+
+                    <button title="Procesar" type="button" onclick="informeReporte('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                '</div>`;
+
+            htmlOpcionReporte += ``;
+        } else if (codRP == 'RP135') { // Reporte liquidación 
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha " type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
+                    <i title="Fecha Fin" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha " type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-fin-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActual}" readonly />
+
+                    <i title="Ruta" class="fas fa-road" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-ruta-${codRP}">
+                    </select>
+                    <i title="Unidad" class="fas fa-bus" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-unidad-${codRP}">
+                    </select>
+                    <select id="select-filtro-vuelta-${codRP}">            
+                    </select>
+
+                    <button title="Procesar" type="button" onclick="cargarRP135('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i><i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;">
+                        </i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+
+
+            htmlOpcionReporte += ``;
+        } else if (codRP == 'RP136') { // Reporte liquidación 
+            //CajunCajun_me_muero
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActualMenos7}" readonly />
+
+                    <i title="Fecha Final" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha Final" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-final-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActual}" readonly />
+
+
+                    <i title="Ruta" class="fas fa-road" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-ruta-${codRP}">
+                    </select>
+                    <i title="Unidad" class="fas fa-map-signs" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-lado-${codRP}">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                    </select>
+                    <i title="MetodoPago" class="fas fa-map-signs" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-MontoPago-${codRP}">
+                        <option value="1">Efectivo</option>
+                        <option value="2">Niubiz</option>
+                    </select>
+
+                    <button title="Procesar" type="button" onclick="cargarRP136('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i>
+                        <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>`;
+
+            htmlOpcionReporte += ``;
+        } else if (codRP == 'RP137') { // NUEVO REPORTE PARADEROS Y TURNOS
+            //CajunCajun_me_muero
+            htmlOpcionReporte = `
+                <div style="float: left; margin:0" class="margenDivParametros">
+                    <i title="Fecha Inicio"  class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; position: absolute; top: 19px; cursor: pointer; margin-left: 10px;"></i>
+                    <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}" id="input-fecha-inicio-${codRP}" autocomplete="off" style="width: 105px;margin-left:32px" value="${fechaActual}" readonly />
+
+                    <i title="Ruta" class="fas fa-road" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-ruta-${codRP}">
+                    </select>
+                    <i title="Sentido" class="fas fa-map-signs" aria-hidden="true" style="font-size: 18px; cursor: pointer; margin-left: 6px;margin-top:6px;margin-right:3px"></i>
+                    <select id="select-filtro-lado-${codRP}">
+                    </select>
+                    <button title="Procesar" type="button" onclick="cargarRP137('${codRP}');" style="margin-left: 8px; margin-right: 8px; background-color: #3286ecb5;">
+                        <i id="iconCargar${codRP}" class="fa fa-spinner fa-spin" style="display: none; color: #fff; font-size: 20px;margin-right:2px"></i>
+                        <i class="fa fa-chevron-right" aria-hidden="true" style="font-size: 20px; color: white;"></i>                
+                    </button>
+                    
+                    <button title="Exportar a Excel" id="btn-exportar-${codRP}" style="position: relative; top: -2px;">
+                        <img src="../Images/icoExcel.png" />
+                    </button>
+                </div>
+                <div style="margin-top: -6px !important;" id="DivlblTitulo">
+                    <h2 id="lblTitulo">Consultas y Reportes</h2>
+                </div>
+                `;
+
+            htmlOpcionReporte += `
+                <div id="dialogExportExcel" display="none" style="margin-bottom=0">
+                    <div class="margenTopParaModal" style="text-align:center;" role="form">
+                        <div class="row" style="margin-bottom:10px">
+                            <span>Fecha Inicio: </span>
+                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 21px;"></i>
+                            <input title="Fecha Inicio" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-inicio-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:4px" value="${fechaActualMenos7}" readonly />
+                        </div>
+                        
+                        <div class="row" style="margin-bottom:10px">
+                            <span>Fecha Fin: </span>
+                            <i title="Fecha Inicio" class="fa fa-calendar RangoFecha" aria-hidden="true" style="font-size: 18px; top: 19px; cursor: pointer; margin-left: 36px;"></i>
+                            <input title="Fecha Fin" type="text" class="RangoFecha date Fecha${codRP}2" id="fecha-fin-export-${codRP}" autocomplete="off" style="width: 105px;margin-left:4px" value="${fechaActualMenos7}" readonly />
+                        </div>
+
+                        <button onclick="cargarExpoRP137('${codRP}')" style="margin-top:10px">Generar Excel</button>
+                        
+                        <div id="Progress_Status" style="display:none;margin-top: 12px;">
+                            <div id="myprogressBar"></div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        // <i class="fas fa-route" style="margin-left:10px"></i>
+        //    <select id="selectViajes${codRP}" style="margin-left:5px" onchange="Limpiar${codRP}(1,1)">
+        //        <option value="1">Vueltas Totales</option>
+        //        <option value="0">Vueltas Subsidios</option>
+        //    </select>` +
+        // --------------------------------------------------------------------------------------**------------------------------------------------------------------------------------------------
+
+        arrCodReporte.push(codReporte);
+        var codigoReporte = nombreReport.split('_')[0];
+        var tituloReporte = nombreReport.split('_')[1];
+        var nombreReporte = nombreReport.split('_')[2];
+        var Url = '';
+        //inicializando parametros 
+        $('#tabReportes ul').append('<li title="' + nombreReporte + '" ><a href="#tabs-' + numTabs + '">' + codigoReporte + '</a><span onClick="cerrarTab(' + numTabs + ',$(this),' + codReporte + ')" style="position: absolute;right: 0px;top: -5px;cursor:pointer;" class="ui-closable-tab"><i style="font-size: 18px;position: absolute;right: -2px;top: 3px;" class="medium material-icons" >cancel</i></span></li>');
+        Url = '<div id="tabs-' + numTabs + '" >' +
+            '<div id="divParametros" class="sombraFueraDeMapa1" style="display: flex; vertical-align: middle; box-shadow: 0 0 20px 0 rgba(0,0,0,0.6);padding-top: ' + (codRP == 'RP128' ? '' : '11px;') + 'padding-left: 20px;" >' +
+            `${reportesNuevos.includes(codRP) ?
+                `<div style="float:right; margin-top: 0px; z-index: 50; position: relative;">
+                        <div id="divInputBusqueda${codRP}" class="content-input-busqueda">
+                            <input id="txtBuscar${codRP}" type="text" placeholder="Búsqueda" autocomplete="off">
+                            <input type="text" placeholder="Búsqueda" style="display:none" autocomplete="off">
+                        </div>
+                        <div id="divBtnBuscar">
+                            <button id="btnBusquedaTabla${codRP}" title="Búsqueda" class="infoBusqueda">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>` : ''}` +
+
+            // HEADER RP112 FILTROS, FECHAS
+
+            (reportesNuevos.includes(codRP) ? '' : '<strong style="margin-top: 2px;"><i title="Fecha" class="medium material-icons dp48 inf" style="position: relative;top: 4px;cursor:pointer">date_range</i>&nbsp;</strong><input class="datetime' + codigoReporte + '" style="width: 108px;height:28px; margin-top: 2px; margin-left: 4px" id="busqueda' + numTabs + '" type="text" placeholder="Busqueda">' + '&nbsp;') +
+
+            '<div style="float:left; width: 99%" class="margenDivParametros1">' +
+
+            htmlOpcionReporte +
+            '&nbsp;<button style="display:' + (reportesNuevos.includes(codRP) ? 'none' : '') + ';height: 31px;padding-top: 0;padding-bottom: 0;" id="BtnInforme' + codigoReporte + '" onClick="informeReporte(' + '\'' + codigoReporte + '\');" >Procesar</button>' + //Procesar_XD
+            //'<input style="margin: 0px 10px;width: 220px;height: 31px;padding-top: 0;padding-bottom: 0;" id="LeInputBuscadorSawesoUwu'+codigoReporte+'" onkeyup="+FUN_Buscar()+" placeholder="Búscar"></input>' +
+
+            '</div>' ;
+            
+            htmlOpcionReporte2 +
+            '</div>' +
+            '<div  style="position:absolute;top:106px;left:0;right:0;bottom:0px;padding:0.5em" >' +
+            // (codRP == 'RP65' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp65" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp65" style="display: none;"><table id="Rp65Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP82' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp82" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp82" style="display: none;"><table id="Rp82Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP83' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp83" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp83" style="display: none;"><table id="Rp83Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP84' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp84" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp84" style="display: none;"><table id="Rp84Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP85' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp85" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp85" style="display: none;"><table id="Rp85Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            //(codRP == 'RP86' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp86" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp86" style="display: none;"><table id="Rp86Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP95' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp95" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp95" style="display: none;"><table id="Rp95Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP111' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp111" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp111" style="display:none"><table id="tbrp111_2" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP112' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp112" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp112" style="display:none"><table id="Rp112Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP114' ? '<div style="height:95%;overflow:auto;display:none"><table id="tbrp114" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp114" style="display:none"><table id="Rp114Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            // (codRP == 'RP115' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp115" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp115" style="display: none;"><table id="Rp115Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP116' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp116" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp116" style="display: none;"><table id="Rp116Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP117' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp117" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp117" style="display: none;"><table id="Rp117Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP118' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp118" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp118" style="display: none;"><table id="Rp118Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP119' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp119" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp118" style="display: none;"><table id="Rp118Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP120' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp120" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table><br><table id="tbresumen120" style="width:350px;font-size: 14px;" class="highlight responsive-table table"><tbody></tbody></table></div><div id="divRp118" style="display: none;"><table id="Rp118Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP121' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp121" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp118" style="display: none;"><table id="Rp118Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP122' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp122" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp122" style="display: none;"><table id="Rp122Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP123' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp123" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp118" style="display: none;"><table id="Rp118Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP124' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp124" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table><br><table id="tbresumen124" style="width:350px;font-size: 14px;" class="highlight responsive-table table"><tbody></tbody></table></div><div id="divRp124" style="display: none;"><table id="Rp124Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP125' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp125" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp125" style="display: none;"><table id="Rp125Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP126' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp126" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table><br><table id="tbresumen124" style="width:350px;font-size: 14px;" class="highlight responsive-table table"><tbody></tbody></table></div><div id="divRp126" style="display: none;"><table id="Rp126Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (codRP == 'RP127' ? '<div style="height:95%;overflow:auto;" ><table id="tbrp127" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp127" style="display: none;"><table id="Rp127Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            // (codRP == 'RP128' ? '<div style="height:100%;overflow:auto;padding:1em" ><table id="tbrp128" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp128" style="display: none;"><table id="Rp128Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') + 
+            // (codRP == 'RP129' ? '<div style="height:100%;overflow:auto;padding:1em;padding-right:1px" ><table id="tbRP129" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="divRp129" style="display: none;"><table id="Rp129Imp" class="highlight responsive-table table"><caption></caption><thead></thead><tbody></tbody><tfoot></tfoot></table></div>' : '') +
+            (reportesNuevos.includes(codRP) ? `<div id="divContenidoTablas" style="height:98%;overflow:auto;margin:15px 1em" ><table id="tb${codRP}" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div><div id="div${codRP}" style="display: none;"><table id="${codRP}Imp" class="highlight responsive-table table"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>` : '');
+
+
+        if (codRP != 'RP82' && codRP != 'RP83' && codRP != 'RP84' && codRP != 'RP85' && codRP != 'RP95' && codRP != 'RP111' && codRP != 'RP112' && codRP != 'RP114' && codRP != 'RP115' && codRP != 'RP116' && codRP != 'RP117' && codRP != 'RP118' && codRP != 'RP119' && codRP != 'RP120' && codRP != 'RP121' && codRP != 'RP122' && codRP != 'RP123' && codRP != 'RP124' && codRP != 'RP125' && codRP != 'RP126' && codRP != 'RP127' && !reportesNuevos.includes(codRP))
+            Url += '<iframe id="iframeReporte' + codigoReporte + '" style="width:100%;border:0px;" height="100%" ></iframe>' +
+                '</div>' +
+                '</div>';
+
+        $('#tabReportes').append(Url);
+        $('.inf').tooltipster({
+            multiple: true
+        })
+
+        if (codRP == 'RP27') {
+            agregarBuscador(codRP)
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const fechaIni = $(`#fecha-inicio-${codRP}`).val()
+                const fechaFin = $(`#fecha-fin-${codRP}`).val()
+                const fecha = (fechaIni == fechaFin ? fechaIni : `${fechaIni} Hasta: ${fechaFin}`);
+                exportarReporteGeneral(codRP, 'VIAJES TOTALES', fecha)
+            })
+
+            const cabecera = `
+                <tr>
+                    <th style="text-align:center">N</th>
+                    <th style="text-align:center">PADRON</th>
+                    <th style="text-align:center">PLACA</th>
+                    <th style="text-align:center">CONDUCTOR</th>
+                    <th style="text-align:center">A</th>
+                    <th style="text-align:center">B</th>
+                    <th style="text-align:center">TOTAL</th>
+                </tr>
+            `
+
+            $(`#tb${codRP} thead`).append(cabecera)
+            cargarRP27(codRP)
+
+        } else if (codRP == 'RP52') {
+            agregarBuscador(codRP)
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const fechaIni = $(`#fecha-inicio-${codRP}`).val()
+                const fechaFin = $(`#fecha-fin-${codRP}`).val()
+                const fecha = (fechaIni == fechaFin ? fechaIni : `${fechaIni} Hasta: ${fechaFin}`);
+                exportarReporteGeneral(codRP, 'REPORTE DE INSPECTORIA', fecha)
+            })
+
+            const cabecera = `
+                <tr>
+                    <th style="text-align:center">N</th>
+                    <th style="text-align:center">FECHA HORA</th>
+                    <th style="text-align:center">PAD.</th>
+                    <th style="text-align:center">CONDUCTOR</th>
+                    <th style="text-align:center">INSPECTOR</th>
+                    <th style="text-align:center">CONTROL</th>
+                    <th style="text-align:center">COMENTARIO</th>
+                    <th style="text-align:center">USUARIO</th>
+                </tr>
+            `
+
+            $(`#tb${codRP} thead`).append(cabecera)
+            cargarRP52(codRP)
+
+        } else if (codRP == 'RP56') {
+            agregarBuscador(codRP)
+
+            obtenerMeses(`select-mes-${codRP}`)
+            agregarAñosOptions(`select-anio-${codRP}`, 2015, 0)
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const selectMes = document.querySelector(`#select-mes-${codRP}`);
+                const selectAnio = document.querySelector(`#select-anio-${codRP}`);
+                const fecha = selectMes.options[selectMes.selectedIndex].textContent + ' ' + selectAnio.value
+                exportarReporteGeneral(codRP, 'REPORTE DE INSPECTORIA MENSUAL', fecha)
+            })
+
+            cargarRP56(codRP)
+
+        } else if (codRP == 'RP65') {
+            const selectRutas = document.getElementById("selectRuta" + codRP);
+            const selectPersonas = document.getElementById("selectPersona" + codRP);
+            const selectEstado = document.getElementById("selectEstado" + codRP);
+
+            const addOptionAll = (element) => {
+                const optionAll = document.createElement("option");
+                optionAll.value = 0;
+                optionAll.textContent = "--Todos--";
+
+                element.appendChild(optionAll);
+            }
+
+            addOptionAll(selectRutas);
+            addOptionAll(selectEstado);
+
+            const loadReport = async (codRP) => {
+                const request = { Procedimiento: "", Parametro: "", Indice: 0 };
+
+                //RUTAS
+                request.Procedimiento = "dbo.ProcRutaV3";
+                request.Indice = 13;
+
+                const responseRutas = await fetch(UrlGeneral, DataFetch(request, "POST")).then(res => res.json());
+
+                responseRutas["dt0"].forEach(ruta => {
+                    const option = document.createElement("option");
+                    option.value = ruta.CodRuta;
+                    option.textContent = ruta.NomRuta;
+
+                    selectRutas.appendChild(option);
+                })
+
+                selectRutas.addEventListener("change", async () => LimpiarTablaUtil(1, "tbrp65", 5));
+
+                //ESTADOS
+                request.Procedimiento = "dbo.ProcSuministroReportesV1";
+                request.Indice = 10;
+
+                const responseEstados = await fetch(UrlGeneral, DataFetch(request, "POST")).then(res => res.json());
+
+                responseEstados["dt0"].forEach(estado => {
+                    const option = document.createElement("option");
+                    option.value = estado.CodEstado;
+                    option.textContent = estado.NomEstado;
+
+                    selectEstado.appendChild(option);
+                })
+
+                selectEstado.addEventListener("change", async () => {
+                    LimpiarTablaUtil(1, "tbrp65", 5)
+                    await setPersonas()
+                });
+
+                //PERSONAS
+                selectPersonas.addEventListener("change", async () => LimpiarTablaUtil(1, "tbrp65", 5));
+
+                const setPersonas = async () => {
+                    selectPersonas.innerHTML = "";
+
+                    addOptionAll(selectPersonas);
+
+                    request.Procedimiento = "dbo.ProcSuministroReportesV1";
+                    request.Parametro = selectEstado.value;
+                    request.Indice = 11;
+
+                    const responsePersonas = await fetch(UrlGeneral, DataFetch(request, "POST")).then(res => res.json());
+
+                    responsePersonas["dt0"].forEach(persona => {
+                        const option = document.createElement("option");
+                        option.value = persona.CodPersona;
+                        option.textContent = persona.NomPersona;
+
+                        selectPersonas.appendChild(option);
+                    })
+
+                    $("#selectPersona" + codRP).select2();
+
+                    informeReporte(codRP);
+                }
+
+                await setPersonas();
+
+            }
+
+            loadReport(codRP);
+        } else if (codRP == 'RP78') {
+            cargarDataUnidadesConSalida(ObjUtil.ObtenerFechaActual());
+
+        } else if (codRP == 'RP84') {
+            //$('#busquedaFinRp84').datepicker({
+            //    dateFormat: 'dd/mm/yy',
+            //    maxDate: 'now'
+            //});
+            //$('#busquedaFinRp84').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 45);
+        } else if (codRP == 'RP82') {
+            $('#busquedaFinRp82').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFinRp82').val(ObjUtil.ObtenerFechaActual());
+
+        } else if (codRP == 'RP83') {
+
+            $('.datetimeRP83').change(function () {
+                var parametro = $('.datetimeRP83').val() + '|' + $('.datetimeRP83').val();
+                ListaUnidadV2(parametro, 1);
+                obtenerTipoPersonaV2(parametro, 3);
+            })
+
+            $('#BtnInformeRP83').attr('disabled', 'disabled');
+            $('#BtnInformeRP83').css('cursor', 'not-allowed');
+
+            cargarTodasLasRutas(0, 48);// 0 = opc todos NO , 10 = indice
+
+            $('#selectRuta83').change(function () {
+                agregaOpcTodos($('.selectUnidad83'));
+                agregaOpcTodos($('.selectPersona83'));
+                $("#radioRuta83").prop("checked", true);
+                TIPO_CONSULTA = $('#radioRuta83').attr('data-value');
+                ListaUnidadPorRutaRP85($('#selectRuta83').val());
+                convertirSelect2($(".selectReporte83"));
+            });
+
+            $('#selectUnidad83').change(function () {
+                agregaOpcTodos($('.selectRuta83'));
+                agregaOpcTodos($('.selectPersona83'));
+                $("#radioUnidad83").prop("checked", true);
+                TIPO_CONSULTA = $('#radioUnidad83').attr('data-value');
+                convertirSelect2($(".selectReporte83"));
+            });
+
+            $('#selectPersona83').change(function () {
+                agregaOpcTodos($('.selectRuta83'));
+                agregaOpcTodos($('.selectUnidad83'));
+                $("#radioPersona83").prop("checked", true);
+                TIPO_CONSULTA = $('#radioPersona83').attr('data-value');
+                convertirSelect2($(".selectReporte83"));
+            });
+
+            $("input[name=optradio83]").click(function () {
+                TIPO_CONSULTA = $(this).attr('data-value');
+                agregaOpcTodos($('.selectReporte83'));
+                agregaOpcTodos($('#selectRuta83'));
+                if (TIPO_CONSULTA == 1) {
+                    if ($("#selectRuta83").val() == 0) {
+                        $("#selectRuta83").val($("#selectRuta83 option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 2) {
+                    if ($("#selectUnidad83").val() == 0) {
+                        $("#selectUnidad83").val($("#selectUnidad83 option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 3) {
+                    if ($("#selectPersona83").val() == 0) {
+                        $("#selectPersona83").val($("#selectPersona83 option:first").val());
+                    }
+                }
+                convertirSelect2($(".selectReporte83"));
+
+            });
+        } else if (codRP == 'RP85') {
+
+            $('#BtnInformeRP85').attr('disabled', 'disabled');
+            $('#BtnInformeRP85').css('cursor', 'not-allowed');
+
+            $('#busquedaFin').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+
+            $('#busquedaFin').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 10);// 0 = opc todos NO , 10 = indice
+            llenarSelectSituacion();
+            $('.datetimeRP85').change(function () {
+                var parametro = $('.datetimeRP85').val() + '|' + $('#busquedaFin').val();
+                obtenerTipoPersonaV2(parametro, 2);
+            })
+
+            $('#busquedaFin').change(function () {
+                var parametro = $('.datetimeRP85').val() + '|' + $('#busquedaFin').val();
+                obtenerTipoPersonaV2(parametro, 2);
+            })
+
+            $('#selectRuta').change(function () {
+                agregaOpcTodos($('.selectUnidad85'));
+                agregaOpcTodos($('.selectPersona85'));
+                $("#radioRuta").prop("checked", true);
+                TIPO_CONSULTA = $('#radioRuta').attr('data-value');
+                ListaUnidadPorRutaRP85($('#selectRuta').val());
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $('#selectUnidad').change(function () {
+                agregaOpcTodos($('.selectRuta85'));
+                agregaOpcTodos($('.selectPersona85'));
+                $("#radioUnidad").prop("checked", true);
+                TIPO_CONSULTA = $('#radioUnidad').attr('data-value');
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $('#selectPersona').change(function () {
+                agregaOpcTodos($('.selectRuta85'));
+                agregaOpcTodos($('.selectUnidad85'));
+                $("#radioPersona").prop("checked", true);
+                TIPO_CONSULTA = $('#radioPersona').attr('data-value');
+                convertirSelect2($(".selectReporte"));
+            });
+
+            $("input[name=optradio]").click(function () {
+                TIPO_CONSULTA = $(this).attr('data-value');
+                agregaOpcTodos($('.selectReporte'));
+                if (TIPO_CONSULTA == 1) {
+                    if ($("#selectRuta").val() == 0) {
+                        $("#selectRuta").val($("#selectRuta option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 2) {
+                    if ($("#selectUnidad").val() == 0) {
+                        $("#selectUnidad").val($("#selectUnidad option:first").val());
+                    }
+                } else if (TIPO_CONSULTA == 3) {
+                    if ($("#selectPersona").val() == 0) {
+                        $("#selectPersona").val($("#selectPersona option:first").val());
+                    }
+                }
+                convertirSelect2($(".selectReporte"));
+                ///ACA DEBE ESTAR LA FUNCION QUE CARGA EL FILTRO
+
+            });
+        } else if (codRP == 'RP86') {
+            $('.datetimerango').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('.datetimerango').val(ObjUtil.ObtenerFechaActual());
+            cargarTodosLosRecorridos(11);
+
+            $('#selectRutaRP86').change(function () {
+                cargarSelectRecorridoXIdRuta($('#selectRutaRP86').val(), JSONRecorridos, $('#selectRecorrido'));
+            });
+        } else if (codRP == 'RP89') {
+            $('#busquedaFinRp89').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFinRp89').val(ObjUtil.ObtenerFechaActual());
+            cargarTodosLosRecorridos(12);
+
+            $('#selectRecorrido89').change(function () {
+                cargarComboControl($('#selectRecorrido89').val());
+            });
+
+            $('#selectRuta89').change(function () {
+                cargarSelectRecorridoXIdRuta($('#selectRuta89').val(), JSONRecorridos, $('#selectRecorrido89'));
+                cargarComboControl($('#selectRecorrido89').val());
+            });
+        } else if (codRP == 'RP92') {
+            cargarTodasLasRutas(1, 13);
+        } else if (codRP == 'RP95') { // RP95
+            //$('#busquedaFinRp95').datepicker({
+            //    dateFormat: 'dd/mm/yy',
+            //    maxDate: 'now'
+            //});
+            //$('#busquedaFinRp95').val(ObjUtil.ObtenerFechaActual());
+
+            //$('#txtHoraIniRP95').datetimepicker({
+            //    datepicker: false,
+            //    format: 'H:i',
+            //    maxDate: 'now'
+            //});
+
+            //$('#txtHoraFinRP95').datetimepicker({
+            //    datepicker: false,
+            //    format: 'H:i',
+            //    maxDate: 'now'
+            //});
+            cargarTodasLasRutas(1, 18);//1: todas las rutas , 18 : subindice ----> cargar  rutas y unidades
+            //$('#selectRutaRP95').change(function () {
+            //    ListaUnidadPorRutaRP95($('#selectRutaRP95').val());
+            //});
+        } else if (codRP == 'RP96') {
+            $('#busquedaFinRp96').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+
+        } else if (codRP == 'RP111') {
+            $('#busquedaFinRp111').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+
+            $('#busquedaFinRp111').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 32);
+
+        } else if (codRP == 'RP112') {
+            cargarTodasLasRutas(0, 33); //cargar select selectruta112
+            var mes = fechaActual.split('/')[1];
+            var year = fechaActual.split('/')[2];
+            $('#selectMes112').val(Number(mes));
+            $('#selectAnio112').val(year);
+            llenarSelectSituacion();
+
+        } else if (codRP == 'RP113') {
+            $('.datetimeRP113').val(fIRpIniMes);
+
+            $('#busquedaFin113').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+
+            $('#busquedaFin113').val(ObjUtil.ObtenerFechaActual());
+
+            cargarTodasLasRutas(1, 37);
+
+            ListaUnidadPorRuta(0);
+
+            $('#selectRuta113').change(function () {
+
+                var codRuta = $('#selectRuta113').val();
+                ListaUnidadPorRuta(codRuta);
+            });
+
+        } else if (codRP == 'RP114') {
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+            await cargarTodasLasRutas(1, 38);
+            await cargarRP114(codRP)
+
+        } else if (codRP == 'RP115') { //Cambios aqui
+            agregarBuscador(codRP)
+            $('.datetimeRP115').val(fIRpIniMes);
+            $('#busquedaFin115').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFin115').val(ObjUtil.ObtenerFechaActual());
+            //$('.datetimeRP115').val('')//01/11/2021
+            //$('#busquedaFin115').val('');//30/11/2021
+            cargarTodasLasRutas(0, 39);
+
+            const cargarUnidades = async () => {
+                const selectUnidades = document.getElementById(`selectUnidad${codRP}`);
+                const request = {
+                    Procedimiento: "ProcUnidadAV2",
+                    Parametro: "",
+                    Indice: 17
+                }
+                const response = await fetch(UrlGeneral, DataFetch(request, "POST")).then(res => res.json());
+                const data = response["dt0"];
+
+                data.forEach(unidad => {
+                    const option = document.createElement("option");
+                    option.value = unidad.CodUnidad;
+                    option.textContent = unidad.PadronUnidad + " - " + unidad.PlacaUnidad;
+
+                    selectUnidades.appendChild(option);
+                })
+
+                $(`#selectUnidad${codRP}`).select2();
+            }
+
+            cargarUnidades();
+
+            const selectRutas = document.getElementById(`selectRuta115`);
+
+            const hideSelecUnidades = () => {
+                let ruta = selectRutas.value;
+                if (ruta == "") ruta = 1
+
+                if (ruta == 0) {
+                    $(`.section-unidades${codRP}`).css("display", "inline-block");
+                } else {
+                    $(`.section-unidades${codRP}`).css("display", "none");
+                }
+            }
+
+            selectRutas.addEventListener('change', () => hideSelecUnidades())
+
+            hideSelecUnidades();
+
+            $('#selectTipo115').change(function () {
+                $('#BtnInformeRP115').focus();
+            })
+
+        } else if (codRP == 'RP116') {
+            $('.datetimeRP116').val(fIRpIniMes);
+
+            $('#busquedaFin116').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+
+            $('#busquedaFin116').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(1, 40);
+
+        } else if (codRP == 'RP117') {
+            $('#busquedaFin117').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFin117').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 49);
+            llenarSelectSituacion();
+        } else if (codRP == 'RP118') {
+            $('.datetimeRP118').val(fIRpIniMes);
+            $('#busquedaFin118').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFin118').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(1, 50);
+        } else if (codRP == 'RP119') {
+            cargarTodasLasRutas(1, 56);
+            htmlOpcionReporte = '<strong>Lado:&nbsp;&nbsp;</strong><select id="txtLado119"><option value="A">A</option><option value="B">B</option></select>';;
+
+            htmlOpcionReporte2 = '&nbsp;&nbsp;<button onclick="exportarReporte119();" style="height: 31px;padding-top: 0;padding-bottom: 0;" ><img src="../Images/icoExcel.png"></button>' +
+                '&nbsp;<button title="Imprimir" id="btnExport119" style="height: 31px;padding-top: 0;padding-bottom: 0;" onclick="ImprimirRP119();"><img width="21" src="../Images/logo/print_.png"></button>';
+        } else if (codRP == 'RP120') { //Distribución general de unidades ----------------
+            cargarTodasLasRutas(0, 51);
+        } else if (codRP == 'RP121') { //Indicadores Operacionales Diario ----------------
+            cargarTodasLasRutas(0, 52);
+        } else if (codRP == 'RP122') { //----------------
+            cargarTodasLasRutas(0, 63);
+        } else if (codRP == 'RP123') { //Movimiento operacional de la flota vehicular
+            cargarTodasLasRutas(0, 53);
+            $('#busquedaFin123').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFin123').val(ObjUtil.ObtenerFechaActual());
+        } else if (codRP == 'RP124') { //Reporte consolidado mensual de vueltas
+            cargarTodasLasRutas(0, 54);
+        } else if (codRP == 'RP125') {
+            $('.datetimeRP125').val(fIRpIniMes);
+
+            $('#busquedaFin125').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: 'now'
+            });
+            $('#busquedaFin125').val(ObjUtil.ObtenerFechaActual());
+            cargarTodasLasRutas(0, 55);
+        } else if (codRP == 'RP127') { //----------------
+            cargarTodasLasRutas(0, 64);
+        } else if (codRP == 'RP128') { //----------------
+            $('#txtFechaInicio').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '+0d',
+                onSelect: function () {
+                    LimpiarTabla(1);
+                }
+            });
+
+            $('#txtFechaFin').datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '+0d',
+                onSelect: function () {
+                    LimpiarTabla(1);
+                }
+            });
+
+            $('.RangoFecha').css('display', 'none');
+            var strYear = '';
+            for (i = 2018; i <= yearActual; i++) {
+                strYear += '<option value="' + i + '" >' + (i) + '</option>';
+            }
+            $('#selAño').empty();
+            $('#selAño').append(strYear);
+            $('#selAño option[value="' + yearActual + '"]').prop('selected', true);
+
+            var mesActual = Number(fechaActual.split('/')[1]);
+            if ($('#selAño').val() == 2018) {
+                strSelectMes = '<option value="8">AGOSTO</option>' +
+                    '<option value="9">SETIEMBRE</option>' +
+                    '<option value="10">OCTUBRE</option>' +
+                    '<option value="11">NOVIEMBRE</option>' +
+                    '<option value="12" >DICIEMBRE</option>';
+
+            } else {
+                strSelectMes = '<option value="1">ENERO</option>' +
+                    '<option value="2">FEBRERO</option>' +
+                    '<option value="3">MARZO</option>' +
+                    '<option value="4">ABRIL</option>' +
+                    '<option value="5">MAYO</option>' +
+                    '<option value="6">JUNIO</option>' +
+                    '<option value="7">JULIO</option>' +
+                    '<option value="8">AGOSTO</option>' +
+                    '<option value="9">SETIEMBRE</option>' +
+                    '<option value="10">OCTUBRE</option>' +
+                    '<option value="11">NOVIEMBRE</option>' +
+                    '<option value="12" >DICIEMBRE</option>';
+            }
+
+
+
+            $('#selMes').empty();
+            $('#selMes').append(strSelectMes);
+
+            if (mesActual != 12 && $('#selAño').val() == yearActual) {
+                for (var i = Number(mesActual) + Number(1); i <= 12; i++) {
+                    $('#selMes option[value="' + i + '"]').css('display', 'none');
+                }
+            }
+
+            $('#selMes option[value="' + mesActual + '"]').prop('selected', true);
+
+            informeReporte('RP128');
+            ObjUtil.Modal($('#DivDetallePivot'), 'auto', '1100', true, false, false, true, 'Detalle Producción');
+            ObjUtil.Modal($('#DialogMapa'), '600', '800', true, false, false, true, "Ubicación");
+            ObjUtil.Modal($('#divMostrarImagen'), 'auto', '600', true, false, false, true, "Fotos");
+        } else if (codRP == 'RP129') { //----------------
+            $('#selTipoEntidad' + codRP).empty()
+            Data = {
+                Procedimiento: 'dbo.ProcReporteCantidadVuelta',
+                Parametro: ``,
+                Indice: 11
+            }
+
+            fetch(UrlGeneral, DataFetch(Data, 'POST')).then(res => res.json())
+                .then(async (Datos) => {
+                    let jsondata = Datos['dt0'];
+                    let strCuerpo = '';
+                    jsondata.map(function (data, i) {
+                        strCuerpo += `<option value="${data.CodRuta}">${data.NomRuta}</option>`
+                    })
+
+                    $('#selTipoEntidad' + codRP).append(strCuerpo)
+
+                    await searchUnit(codRP);
+
+                    $(`selectUnidad${codRP}`).change(function () {
+                        LimpiarTabla(1, codRP)
+                    })
+                    $(`selectUnidad${codRP}`).select2();
+
+                    $('#txtFechaInicio' + codRP).datepicker({
+                        dateFormat: 'dd/mm/yy',
+                        maxDate: '+0d',
+                        onSelect: function () {
+                            LimpiarTabla(1, codRP);
+                        }
+                    });
+
+                    $('#txtFechaFin' + codRP).datepicker({
+                        dateFormat: 'dd/mm/yy',
+                        maxDate: '+0d',
+                        onSelect: function () {
+                            LimpiarTabla(1, codRP);
+                        }
+                    });
+
+                    $('.RangoFecha' + codRP + '').css('display', 'none');
+                    var strYear = '';
+                    for (i = 2018; i <= yearActual; i++) {
+                        strYear += '<option value="' + i + '" >' + (i) + '</option>';
+                    }
+                    $('#selAño' + codRP + '').empty();
+                    $('#selAño' + codRP + '').append(strYear);
+                    $('#selAño' + codRP + ' option[value="' + yearActual + '"]').prop('selected', true);
+
+                    var mesActual = Number(fechaActual.split('/')[1]);
+
+                    strSelectMes = '<option value="1">ENERO</option>' +
+                                    '<option value="2">FEBRERO</option>' +
+                                    '<option value="3">MARZO</option>' +
+                                    '<option value="4">ABRIL</option>' +
+                                    '<option value="5">MAYO</option>' +
+                                    '<option value="6">JUNIO</option>' +
+                                    '<option value="7">JULIO</option>' +
+                                    '<option value="8">AGOSTO</option>' +
+                                    '<option value="9">SETIEMBRE</option>' +
+                                    '<option value="10">OCTUBRE</option>' +
+                                    '<option value="11">NOVIEMBRE</option>' +
+                                    '<option value="12" >DICIEMBRE</option>';
+
+                    $('#selMes' + codRP + '').empty();
+                    $('#selMes' + codRP + '').append(strSelectMes);
+
+                    // if (mesActual != 12 && $('#selAño' + codRP + '').val() == yearActual) {
+                    //     for (var i = Number(mesActual) + Number(1); i <= 12; i++) {
+                    //         $('#selMes' + codRP + ' option[value="' + i + '"]').css('display', 'none');
+                    //     }
+                    // }
+
+                    $('#selMes' + codRP + ' option[value="' + mesActual + '"]').prop('selected', true);
+                    informeReporte('RP129');
+                })
+
+        } else if (codRP == 'RP130') {
+            //let mensajeAlaNacion = '<img src="../Images/Mantenimiento/MantenimientoSinFondo.png" style="width:80%;height:100%"/>'
+            //$('#divContenidoTablas').css({ "text-align": "center"})
+            //$('#divContenidoTablas').append(mensajeAlaNacion)
+
+            $('#selTipoEntidad' + codRP).empty()
+            Data = {
+                Procedimiento: 'dbo.ProcReporteCantidadVuelta',
+                Parametro: ``,
+                Indice: 11
+            }
+            fetch(UrlGeneral, DataFetch(Data, 'POST')).then(res => res.json())
+                .then(Datos => {
+                    let jsondata = Datos['dt0'];
+                    let strCuerpo = '';
+                    jsondata.map(function (data, i) {
+                        strCuerpo += `<option value="${data.CodRuta}">${data.NomRuta}</option>`
+                    })
+
+                    $('#btnBusquedaTabla' + codRP).click(function () {
+                        $('#txtBuscar' + codRP).val('');
+
+                        if ($('#divInputBusqueda' + codRP).hasClass('active')) {
+                            $('#divInputBusqueda' + codRP).removeClass('active');
+                            $('#divInputBusqueda' + codRP).css('width', '39px');
+                            $.uiTableFilter($('.table'), '');
+                        } else {
+                            $('#divInputBusqueda' + codRP).addClass('active');
+                            $('#divInputBusqueda' + codRP).css('width', '239px');
+                            $('#txtBuscar' + codRP).focus().select();
+                        }
+
+                    })
+
+                    $('#txtBuscar' + codRP).keyup(function () {
+                        $.uiTableFilter($(`#tb${codRP}`), this.value);
+                        //ListarRP130()
+                    });
+
+                    $('#selTipoEntidad' + codRP).append(strCuerpo)
+
+                    $('#txtFechas' + codRP).datepicker({
+                        dateFormat: 'dd/mm/yy',
+                        maxDate: '-1d',
+                        onSelect: function () {
+                            LimpiarRP130(1, 1)
+                        }
+                    });
+                    informeReporte('RP130');
+                })
+
+
+        } else if (codRP == 'RP132') {
+            agregarBuscador(codRP)
+
+            $(`#txt-fecha-${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 11)
+                }
+            });
+
+            //$(`#btn-exportar-${codRP}`).click(() => exportarReporte132(`tb${codRP}`, 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO', $(`#txt-fecha-${codRP}`).val()))
+
+            const selectTipoConsulta = document.querySelector(`#select-tipo-consulta-${codRP}`)
+            selectTipoConsulta.addEventListener('click', () => ocultarMostrarDetallado(codRP))
+
+            $(`#tb${codRP} thead`).append(`
+                <tr>
+                    <th>GRUPO</th>
+                    <th style="text-align:center">PAD.</th>
+                    <th>CONDUCTOR</th>
+                    <th style="text-align:center">VUELTAS</th>
+                    <th style="text-align:right" title="Producción Efectivo">P. EFECTIVO</th>
+                    <th style="text-align:right" title="Producción Visa">P. VISA</th>
+                    <th style="text-align:right">EGRESOS</th>
+                    <th style="text-align:right" title="Producción Neta">P. NETA</th>
+                    <th style="text-align:right" title="Producción Mínima">P. MINIMA</th>
+                    <th style="text-align:right">SUMA DE DIFERENCIA</th>
+                    <th style="text-align:right">VARIACION %</th>
+                </tr>
+            `)
+
+            informeReporte(codRP);
+        } else if (codRP == 'RP133') {
+            agregarBuscador(codRP)
+
+            $(`#txt-fecha-${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 16)
+                    $(`#tb${codRP}`).css({ border: 'none' })
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => exportarReporteGeneral(codRP, 'Reporte de Unidades Reprogramadas por Dia', $(`#txt-fecha-${codRP}`).val()))
+
+            $(`#tb${codRP} thead`).append(`
+                <tr>
+                    <th rowspan="2" style="vertical-align: middle">N</th>
+                    <th rowspan="2" style="text-align:center; vertical-align: middle">F. OPERACIÓN</th>
+                    <th rowspan="2" style="text-align:center; vertical-align: middle">F. REGISTRO</th>
+                    <th rowspan="2" style="text-align:center; vertical-align: middle">TIPO REPROGRAMACION</th>
+                    <th colspan="5" style="text-align:center; border-left: 4px solid #000"">UNIDAD 1</th>
+                    <th colspan="5" style="text-align:center; border-left: 4px solid #000"">UNIDAD 2</th>
+                </tr>
+                <tr>
+                    <th style="text-align:center; border-left: 4px solid #000">RUTA</th>
+                    <th style="text-align:center">UNIDAD</th>
+                    <th style="text-align:center">CONDUCTOR</th>
+                    <th style="text-align:center">CONTROL</th>
+                    <th style="text-align:center">F. PRONOSTICADO</th>
+                    <th style="text-align:center; border-left: 4px solid #000">RUTA</th>
+                    <th style="text-align:center">UNIDAD</th>
+                    <th style="text-align:center">CONDUCTOR</th>
+                    <th style="text-align:center">CONTROL</th>
+                    <th style="text-align:center">F. PRONOSTICADO</th>
+                </tr>
+            `)
+
+            informeReporte(codRP);
+        } else if (codRP == 'RP134') {
+            agregarBuscador(codRP)
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 7)
+                    var parametro = $('#txt-fecha-RP134').val() + '|' + $('#txt-fecha-fin-RP134').val();
+                    obtenerTipoPersonaV2(parametro, 2);
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const fechaIni = $(`#fecha-inicio-${codRP}`).val()
+                const fechaFin = $(`#fecha-fin-${codRP}`).val()
+                const fecha = (fechaIni == fechaFin ? fechaIni : `${fechaIni} Hasta: ${fechaFin}`);
+                exportarReporteGeneral(codRP, 'VIAJES TOTALES', fecha)
+            })
+
+            $(`#select-ruta-${codRP}`).change(function () {
+                agregaOpcTodos($('.selectUnidad134'));
+                agregaOpcTodos($('.selectPersona134'));
+                $(`#radio-ruta-${codRP}`).prop("checked", true);
+                TIPO_CONSULTA = $(`#radio-ruta-${codRP}`).attr('data-value');
+                ListaUnidadPorRutaRP134($(`#select-ruta-${codRP}`).val());
+                convertirSelect2($(".selectReporte134"));
+            });
+
+            $(`#select-unidad-${codRP}`).change(function () {
+                agregaOpcTodos($('.selectRuta134'));
+                agregaOpcTodos($('.selectPersona134'));
+                $(`#radio-unidad-${codRP}`).prop("checked", true);
+                TIPO_CONSULTA = $(`#radio-unidad-${codRP}`).attr('data-value');
+                convertirSelect2($(".selectReporte134"));
+            });
+
+            $(`#select-persona-${codRP}`).change(function () {
+                agregaOpcTodos($('.selectRuta134'));
+                agregaOpcTodos($('.selectUnidad134'));
+                $(`#radio-persona-${codRP}`).prop("checked", true);
+                TIPO_CONSULTA = $(`#radio-persona-${codRP}`).attr('data-value');
+                convertirSelect2($(".selectReporte134"));
+            });
+
+            $("input[name=optradio]").click(function () {
+                TIPO_CONSULTA = $(this).attr('data-value');
+                agregaOpcTodos($('.selectReporte134'));
+                if (TIPO_CONSULTA == 1) {
+                    if ($(`#select-ruta-${codRP}`).val() == 0) {
+                        $(`#select-ruta-${codRP}`).val($(`#select-ruta-${codRP} option:first`).val());
+                    }
+                } else if (TIPO_CONSULTA == 2) {
+                    if ($(`#select-unidad-${codRP}`).val() == 0) {
+                        $(`#select-unidad-${codRP}`).val($(`#select-unidad-${codRP} option:first`).val());
+                    }
+                } else if (TIPO_CONSULTA == 3) {
+                    if ($(`#select-persona-${codRP}`).val() == 0) {
+                        $(`#select-persona-${codRP}`).val($(`#select-persona-${codRP} option:first`).val());
+                    }
+                }
+                convertirSelect2($(".selectReporte134"));
+            });
+
+            cargarTodasLasRutas(0, 65);
+            convertirSelect2($(".selectReporte134"));
+            cargarRP134(codRP)
+
+        } else if (codRP == 'RP135') {
+            agregarBuscador(codRP)
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    LimpiarTabla(1, codRP, false, 7)
+                    var parametro = $('#txt-fecha-RP134').val() + '|' + $('#txt-fecha-fin-RP134').val();
+                    ListarUnidad()
+                    obtenerTipoPersonaV2(parametro, 2);
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const fechaIni = $(`#fecha-inicio-${codRP}`).val()
+                const fechaFin = $(`#fecha-fin-${codRP}`).val()
+                const fecha = (fechaIni == fechaFin ? fechaIni : `${fechaIni} Hasta: ${fechaFin}`);
+                exportarReporteGeneral(codRP, 'REPORTE DE DEMANDAS DE UNIDADES POR PARADERO', fecha)
+            })
+
+            const fechaInicio = document.getElementById("input-fecha-inicio-" + codRP);
+            const fechaFin = document.getElementById("input-fecha-fin-" + codRP);
+            const selectRuta = document.querySelector('#select-filtro-ruta-' + codRP);
+            const selectUnidad = document.querySelector('#select-filtro-unidad-' + codRP);
+            const selectVuelta = document.querySelector('#select-filtro-vuelta-' + codRP);
+
+            const ListarRuta = async () => {
+                const Data = {
+                    Procedimiento: 'eco.ProcRuta',
+                    Parametro: ``,
+                    Indice: 10
+                }
+
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrRuta = response['dt0'];
+                let option = '';
+
+                arrRuta.forEach((ruta, index) => {
+                    option += `<option value="${ruta.CodRuta}">${ruta.NomRuta}</option>`;
+                })
+                selectRuta.innerHTML = option;
+                ListarUnidad();
+            }
+
+            const ListarUnidad = async () => {
+                const CodRuta = selectRuta.value;
+                const Data = {
+                    Procedimiento: 'ProcBoletoTransaccionDemandaControl',
+                    Parametro: `${CodRuta}`,
+                    Indice: 11
+                }
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrUnidad = response['dt0'];
+                let option = '';
+
+                // option += '<option value="0">-- SELECCIONAR --</option>'
+
+                arrUnidad.forEach((unidad, index) => {
+                    option += `<option value="${unidad.CodUnidad}">${unidad.NomUnidad}</option>`;
+                })
+                selectUnidad.innerHTML = option;
+                $('#select-filtro-unidad').select2();
+                await ListarVuelta();
+
+            }
+
+            const ListarVuelta = async () => {
+                let fechaini = fechaInicio.value;
+                let fechafin = fechaFin.value;
+                let CodRuta = selectRuta.value;
+                let CodUnidad = selectUnidad.value;
+
+                const Data = {
+                    Procedimiento: 'ProcBoletoTransaccionDemandaControl',
+                    Parametro: `${fechaini}|${fechafin}|${CodUnidad}`,
+                    Indice: 12
+                }
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrVuelta = response['dt0'];
+                let option = '';
+                // option += '<option value="0">-- SELECCIONAR --</option>'
+
+                arrVuelta.forEach((vuelta, index) => {
+                    option += `<option value="${vuelta.CodSalida}">${vuelta.Viajes} </option>`;
+                })
+                selectVuelta.innerHTML = option;
+            }
+
+            const agregarEventosElementos = () => {
+                selectRuta.addEventListener('change', () => ListarUnidad());
+                $(document.body).on("change", "#select-filtro-unidad-" + codRP, (e) => {
+                    ListarVuelta()
+                });
+            }
+
+            agregarEventosElementos();
+
+            (async () => {
+                await ListarRuta();
+                document.querySelector(`#tb${codRP}`).getElementsByTagName('tbody')[0].innerHTML = `<td colspan="7" style="text-align:center;font-size:20px"><b>Seleccione el botón Procesar...</b></td>`
+                //await cargarRP135(codRP);
+            })()
+        } else if (codRP == 'RP136') {
+            agregarBuscador(codRP)
+
+            const cabecera = `
+                <tr>
+                    <th style="text-align:center">FECHA</th>
+                    <th style="text-align:center">PARADERO</th>
+                    <th style="text-align:right">TOTAL</th>
+                </tr>
+            `
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    $('#tb' + codRP + ' thead').html(cabecera);
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(() => {
+                const fechaIni = $(`#input-fecha-inicio-${codRP}`).val()
+                exportarReporteGeneral(codRP, 'Reporte de Producción de Boletos Niubiz por Paradero', fechaIni)
+            })
+
+            const selectRuta = document.querySelector('#select-filtro-ruta-' + codRP);
+
+            const ListarRuta = async () => {
+                const Data = {
+                    Procedimiento: 'eco.ProcRuta',
+                    Parametro: ``,
+                    Indice: 10
+                }
+
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrRuta = response['dt0'];
+                let option = '';
+
+                arrRuta.forEach((ruta, index) => {
+                    option += `<option value="${ruta.CodRuta}">${ruta.NomRuta}</option>`;
+                })
+                selectRuta.innerHTML = option;
+            }
+
+            const agregarEventosElementos = () => {
+                selectRuta.addEventListener('change', () => {
+                    $('#tb' + codRP + ' thead').html(cabecera);
+                    LimpiarTabla(1, codRP, false, 7)
+                });
+            }
+
+            agregarEventosElementos();
+
+            (async () => {
+                await ListarRuta();
+                cargarRP136(codRP);
+            })()
+        } else if (codRP == 'RP137') {
+            agregarBuscador(codRP)
+
+            const cabecera = `
+                <tr>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">N</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">F.SALIDA</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">H. SALIDA</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">PADRON</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">PLACA</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">CONDUCTOR</th>
+                    <th style="text-align:center; vertical-align: middle" rowspan="2">SENTIDO</th>
+                    <th style="text-align:center; vertical-align: middle" colspan="2">TOTAL</th>
+                </tr>
+            `
+
+            $(`.Fecha${codRP}`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    $('#tb' + codRP + ' thead').html(cabecera);
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+
+            $(`.Fecha${codRP}2`).datepicker({
+                dateFormat: 'dd/mm/yy',
+                maxDate: '0d',
+                onSelect: function () {
+                    $('#tb' + codRP + ' thead').html(cabecera);
+                    LimpiarTabla(1, codRP, false, 7)
+                }
+            });
+
+            $(`#btn-exportar-${codRP}`).click(async () => {
+                $('#dialogExportExcel').dialog({
+                    buttons: {
+                        "Exportar": function () {
+                            exportarReporte137()
+                        },
+                        "Cerrar": function () {
+                            $(this).dialog("close");
+                            document.getElementById("Progress_Status").style.display = 'none'
+                        }
+                    },
+                    close: function () {
+                    }
+                })
+                $('#dialogExportExcel').dialog("open");
+            })
+
+            const selectRuta = document.querySelector('#select-filtro-ruta-' + codRP);
+            const selectSentido = document.querySelector('#select-filtro-lado-' + codRP);
+
+            const ListarRuta = async () => {
+                const Data = {
+                    Procedimiento: 'eco.ProcRuta',
+                    Parametro: ``,
+                    Indice: 10
+                }
+
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrRuta = response['dt0'];
+                let option = '';
+
+                arrRuta.forEach((ruta, index) => {
+                    option += `<option value="${ruta.CodRuta}">${ruta.NomRuta}</option>`;
+                })
+                selectRuta.innerHTML = option;
+            }
+            //SENTIDOO
+            const ListarSentido = async () => {
+                const Data = {
+                    Procedimiento: 'ProcRecorridoV1',
+                    Parametro: selectRuta.value,
+                    Indice: 10
+                }
+
+                const response = await fetch(urlGeneral, DataFetch(Data, 'POST')).then(res => res.json());
+                const arrSent = response['dt0'];
+                let option = '';
+
+                arrSent.forEach((sent, index) => {
+                    option += `<option value="${sent.CodRecorrido}">${sent.Lado} - ${sent.NomRecorrido}</option>`;
+                })
+                selectSentido.innerHTML = option;
+            }
+
+            const agregarEventosElementos = () => {
+                selectRuta.addEventListener('change', () => {
+                    $('#tb' + codRP + ' thead').html(cabecera);
+                    LimpiarTabla(1, codRP, false, 7)
+                });
+
+                selectRuta.addEventListener('change', () => ListarSentido())
+            }
+
+            agregarEventosElementos();
+
+            (async () => {
+                ObjUtil.Modal($('#dialogExportExcel'), 'auto', '300px', true, false, false, true, 'Generar Excel');
+                await ListarRuta();
+                await ListarSentido();
+                cargarRP137(codRP);
+            })()
+        }
+        //
+        tabReportes.tabs('destroy');
+        tabReportes.tabs();
+        tabReportes.tabs({ active: numTabs - 1 });
+        //$("#tabReportes").tabs("select", "#tabs-1");
+        $('.datetime' + codigoReporte).datepicker({
+            dateFormat: 'dd/mm/yy',
+            maxDate: 'now'
+        });
+
+        if (codRP != 'RP113' && codRP != 'RP115' && codRP != 'RP116' && codRP != 'RP118') {
+            $('.datetime' + codigoReporte).val(ObjUtil.ObtenerFechaActual());
+        }
+
+        numTabs++;
+
+        if ($('.datetimeRP78')) {//para el rp78
+            $('.datetimeRP78').change(function () {
+                $('#selectSalidas').empty();
+                cargarDataUnidadesConSalida($('.datetimeRP78').val());
+            });
+
+            $('#selectUnidadesConSalida').change(function () {
+                cargarSalidas($('.datetimeRP78').val(), $('#selectUnidadesConSalida').val());
+            });
+        }
+    }
+}
+
+function agregarBuscador(codRP) {
+    $('#btnBusquedaTabla' + codRP).click(function () {
+        $('#txtBuscar' + codRP).val('');
+        if ($('#divInputBusqueda' + codRP).hasClass('active')) {
+            $('#divInputBusqueda' + codRP).removeClass('active');
+            $('#divInputBusqueda' + codRP).css('width', '39px');
+            $.uiTableFilter($('.table'), '');
+        } else {
+            $('#divInputBusqueda' + codRP).addClass('active');
+            $('#divInputBusqueda' + codRP).css('width', '239px');
+            $('#txtBuscar' + codRP).focus().select();
+        }
+    })
+    $('#txtBuscar' + codRP).keyup(function () {
+        if (codRP == 'RP115') {
+            $.uiTableFilter($(`#tb${codRP}`), this.value, ['PSJ']);
+        } else {
+            $.uiTableFilter($(`#tb${codRP}`), this.value);
+        }
+    });//tbRP115
+}
+
+function agregaOpcTodos(select) {
+    var existeOpctodos = 0;
+
+    select.find('option').each(function () {
+        if (this.value == 0) {
+            existeOpctodos = 1;
+        }
+    });
+
+    if (existeOpctodos == 0) {
+        select.append('<option value="0" selected>--- TODOS ---</option>');
+    } else {
+        select.val(0);
+    }
+}
+
+function convertirSelect2(select) {
+    select.select2({ // para que aparezca el select 2 
+        theme: "classic"
+    });
+}
+
+function verificaSesion() {
+    var Url = NombreAplicacion + '/./ReporteBoleto/verificaSesion';
+
+    Data = {
+    };
+    $.getJSON(Url, Data, function (Datos) {
+
+    });
+
+}
+
+function informeReporte(codigoReporte) {
+    if (reportesNuevos.includes(codigoReporte)) {
+        $('#iframeReporte' + codigoReporte).css('display', 'none');
+    } else {
+
+        ObjUtil.BloquearPantalla();
+        var fechaConsulta = $('.datetime' + codigoReporte).val();
+        $('#iframeReporte' + codigoReporte).on('load', function () {
+            ObjUtil.DesbloquearPantalla();
+        });
+    };
+
+    switch (codigoReporte) {
+        case 'RP78':
+            if (!$('#selectSalidas').val()) {
+                ObjUtil.MostrarMensaje("No existen salidas para la unidad " + $("#selectUnidadesConSalida option:selected").text(), 0);
+                ObjUtil.DesbloquearPantalla();
+            } else {
+                $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&CodigoSalida=' + $('#selectSalidas').val());
+            }
+            break;
+
+        case 'RP82':
+
+            var fInicio = $('.datetimeRP82').val();
+            var fFin = $('#busquedaFinRp82').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+
+            cargarRP82();
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFinRp82').val());
+            break;
+        case 'RP83':
+
+            var fInicio = $('.datetimeRP83').val();
+
+            cargarRP83();
+
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFinRp83').val());
+            break;
+        case 'RP84':
+            cargarRP84();
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta + '&CodigoSalida=' + $('#selectSalidas').val() +
+            //                                                '&FechaReporteFin=' + $('#busquedaFinRp84').val());
+            break;
+        case 'RP85':
+
+            var fInicio = $('.datetimeRP85').val();
+            var fFin = $('#busquedaFin').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+            cargarRP85();
+
+            //Ruta = NombreAplicacion + '/./BoletoTransaccionReporte/PostProcBoletoTransaccionReporteTicketValidador';
+            //Data = {
+            //    FechaInicio: $('.datetimeRP85').val(),
+            //    FechaFin: $('#busquedaFin').val(),
+            //    CodRuta: $('#selectRuta').val(),
+            //    CodUnidad: $('#selectUnidad').val(),
+            //    CodConductor: $('#selectPersona').val(),
+            //    Tipo: TIPO_CONSULTA,
+            //    CodValidador: 0,
+            //    CodBoleto: 0,
+            //    CodCajaGestionConductor: 0,
+            //    CodSalida: 0,
+            //    CodControl: 0,
+            //    Auxiliar1: '',
+            //    Auxiliar2: '',
+            //    Indice: 105
+            //}
+            break;
+        case 'RP86':
+
+            var fInicio = $('.datetimeRP86').val();
+            var fFin = $('#busquedaFinRp86').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+
+            //cargarRP86();
+
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&FechaReporteFin=' + $('#busquedaFinRp86').val() + '&codRuta=' + $('#selectRecorrido').val());
+            break;
+        case 'RP89':
+            var fInicio = $('.datetimeRP89').val();
+            var fFin = $('#busquedaFinRp89').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&FechaReporteFin=' + $('#busquedaFinRp89').val() + '&codRuta=' + $('#selectRecorrido89').val() + '&codControl=' + $('#selectControl89').val());
+            break;
+        case 'RP92':
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+                '&codRuta=' + $('#selectRutaRP92').val());
+            break;
+        case 'RP95':
+
+            cargarRP95();
+
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+            //     '&FechaReporteFin=' + $('#busquedaFinRp95').val() + '&HoraInicioReporte=' + $('#txtHoraIniRP95').val() + '&HoraFinReporte=' + $('#txtHoraFinRP95').val() +
+            //     '&codRuta=' + $('#selectRutaRP95').val() + '&codLado=' + $('#selectLadoRP95').val() + '&codUnidad=' + $('#selectUnidadRP95').val());
+
+            break;
+        case 'RP111':
+            var fInicio = $('.datetimeRP111').val();
+            var fFin = $('#busquedaFinRp111').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+            cargarRP111();
+            break;
+        case 'RP112':
+            cargarRP112();
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta +
+            //    '&codRuta=' + $('#selectRuta112').val() +
+            //    '&txtnombreruta=' + $("#selectRuta112 option:selected").text() +
+            //    '&txtMes=' + $('#selectMes112').val() +
+            //    '&strmes=' + $('#selectMes112 option:selected').text() +
+            //    '&stranio=' + $('#selectAnio112 option:selected').text() +
+            //    '&txtAnio=' + $('#selectAnio112').val());
+            break;
+        case 'RP113':
+
+            var fInicio = $('.datetimeRP113').val();
+            var fFin = $('#busquedaFin113').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte +
+                '&codRuta=' + $('#selectRuta113').val() + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFin113').val() + '&codUnidad=' + $('#selectUnidad').val());
+            break;
+        case 'RP114':
+            // $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte +
+            //     '&codRuta=' + $('#selectRuta114').val() + '&FechaReporte=' + fechaConsulta);
+            // break;
+            cargarRP114(codigoReporte)
+            break;
+        case 'RP115':
+
+            //id="iconCargar${codRP}"
+            //$(`#iconCargar${codRP}`).css('display', '');
+            var fInicio = $('.datetimeRP115').val();
+            var fFin = $('#busquedaFin115').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+            cargarRP115Unidad();
+
+            //if ($('#selectTipo115').val() == 1) {
+            //    cargarRP115Unidad();
+
+            //} else if ($('#selectTipo115').val() == 2) {
+            //    cargarRP115Conductor();
+            //}
+
+            //$('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte +
+            //    '&codRuta=' + $('#selectRuta115').val() + '&FechaReporte=' + fechaConsulta + '&FechaReporteFin=' + $('#busquedaFin115').val());
+            break;
+        case 'RP116':
+            var fInicio = $('.datetimeRP116').val();
+            var fFin = $('#busquedaFin116').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+
+            cargarRP116();
+            break;
+        case 'RP117':
+            var fInicio = $('.datetimeRP117').val();
+            var fFin = $('#busquedaFin117').val();
+
+            var limiteDias = 31;
+            var resultadoLimiteFecha = ObjUtil.ComprobarRangoFecha(fInicio, fFin, limiteDias);
+
+            if (resultadoLimiteFecha != true) {
+                ObjUtil.MostrarMensaje(resultadoLimiteFecha, 0);
+                ObjUtil.DesbloquearPantalla();
+                return;
+            }
+            cargarRP117();
+            break;
+        case 'RP118':
+            cargarRP118();
+            break;
+        case 'RP119':
+            cargarRP119();
+            break;
+        case 'RP120':
+            cargarRP120();
+            break;
+        case 'RP121':
+            cargarRP121();
+            break;
+        case 'RP122':
+            cargarRP122();
+            break;
+        case 'RP123':
+            cargarRP123();
+            break;
+        case 'RP124':
+            cargarRP124();
+            break;
+        case 'RP125':
+            cargarRP125();
+            break;
+        case 'RP126':
+            cargarRP126();
+            break;
+        case 'RP127':
+            cargarRP127();
+            break;
+        case 'RP129':
+            cargarRP129();
+            break;
+        case 'RP130':
+            cargarRP130();
+            break;
+        case 'RP132':
+            cargarRP132(codigoReporte);
+            break;
+        case 'RP134':
+            cargarRP134(codigoReporte);
+            break;
+        default:
+            $('#iframeReporte' + codigoReporte + '').attr('src', '../Reportes/Reporte2.aspx?codReporte=' + codigoReporte + '&FechaReporte=' + fechaConsulta);
+            break;
+    }
+}
+
+function cerrarTab(numTab, spanClose, codReporte) {
+    $('#trReporte' + codReporte + '').removeClass('hoverReporteTr');
+    //removerArray(arrCodReporte, codReporte);
+    removerArray(arrCodReporte, codReporte);
+    spanClose.parent().remove();
+    $('#tabs-' + numTab).remove();
+    tabReportes.tabs("refresh");
+    //tabReportes.tabs("option", "selected", 1);
+}
+
+function removerArray(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax = arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
+}
+
+function exportarReporte65() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        title: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        filename: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: "",
+    }
+    fnExcelReport("tbRP65", opciones, parametros, "PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO")
+}
+
+function exportarReporte85() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        title: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        filename: 'PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: ($('.datetimeRP85').val() == $('#busquedaFinRp85').val() ? $('.datetimeRP85').val() : $('.datetimeRP85').val() + ' - ' + $('#busquedaFin').val()),
+        //usuarioImpresion: $("#cmbCajaGestion option:selected").text()
+    }
+    fnExcelReport("tbrp85", opciones, parametros, "PRODUCCIÓN DETALLADA BOLETO ELECTRÓNICO")
+}
+
+function exportarReporte111() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        title: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        filename: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: ($('.datetimeRP111').val() == $('#busquedaFinRp111').val() ? $('.datetimeRP111').val() : $('.datetimeRP111').val() + ' - ' + $('#busquedaFinRp111').val()),
+        //usuarioImpresion: $("#cmbCajaGestion option:selected").text()
+    }
+    fnExcelReport("tbrp111", opciones, parametros, "PRODUCCIÓN GLOBAL POR FECHAS")
+}
+
+function exportarReporte117() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        title: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        filename: 'PRODUCCIÓN GLOBAL POR FECHAS',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP117').val(),
+        //usuarioImpresion: $("#cmbCajaGestion option:selected").text()
+    }
+    fnExcelReport("tbrp117", opciones, parametros, "PRODUCCIÓN GLOBAL POR FECHAS")
+}
+
+function exportarReporte82() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN TOTAL DE FLOTA',
+        title: 'PRODUCCIÓN TOTAL DE FLOTA',
+        filename: 'PRODUCCIÓN TOTAL DE FLOTA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: ($('.datetimeRP82').val() == $('#busquedaFinRp82').val() ? $('.datetimeRP82').val() : $('.datetimeRP82').val() + ' - ' + $('#busquedaFinRp82').val()),
+        //usuarioImpresion: $("#cmbCajaGestion option:selected").text()
+    }
+    fnExcelReport("tbrp82", opciones, parametros, "PRODUCCIÓN TOTAL DE FLOTA")
+}
+
+function exportarReporte83() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN POR APERTURA',
+        title: 'PRODUCCIÓN POR APERTURA',
+        filename: 'PRODUCCIÓN POR APERTURA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP83').val(),
+    }
+    fnExcelReport("tbrp83", opciones, parametros, "PRODUCCIÓN POR APERTURA")
+}
+
+function exportarReporte84() {
+    var opciones = {
+        sistema: 'DEMANDA HORARIA BOLETO ELECTRÓNICO',
+        title: 'DEMANDA HORARIA BOLETO ELECTRÓNICO',
+        filename: 'DEMANDA HORARIA BOLETO ELECTRÓNICO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP84').val(),
+    }
+    fnExcelReport("tbrp84", opciones, parametros, "DEMANDA HORARIA BOLETO ELECTRÓNICO")
+}
+
+function exportarReporte86() {
+    var opciones = {
+        sistema: 'DEMANDA HORARIA POR CONTROLES',
+        title: 'DEMANDA HORARIA POR CONTROLES',
+        filename: 'DEMANDA HORARIA POR CONTROLES',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: ($('.datetimeRP86').val() == $('#busquedaFinRp86').val() ? $('.datetimeRP86').val() : $('.datetimeRP86').val() + ' al ' + $('#busquedaFinRp86').val()),
+    }
+    fnExcelReport("Rp86Imp", opciones, parametros, "DEMANDA HORARIA POR CONTROLES");
+}
+
+function exportarReporte95() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN VEHICULAR SEGÚN PUNTO Y HORA DE SALIDA',
+        title: 'PRODUCCIÓN VEHICULAR SEGÚN PUNTO Y HORA DE SALIDA',
+        filename: 'PRODUCCIÓN VEHICULAR SEGÚN PUNTO Y HORA DE SALIDA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP95').val(),
+    }
+    fnExcelReport("tbrp95", opciones, parametros, "PRODUCCIÓN VEHICULAR SEGÚN PUNTO Y HORA DE SALIDA")
+}
+
+function exportarReporte112() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN VEHICULAR MENSUAL POR BOLETO',
+        title: 'PRODUCCIÓN VEHICULAR MENSUAL POR BOLETO',
+        filename: 'PRODUCCIÓN VEHICULAR MENSUAL POR BOLETO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP112').val() + '|' + $('#busquedaFin112').val(),
+    }
+    fnExcelReport("tbrp112", opciones, parametros, "PRODUCCIÓN VEHICULAR MENSUAL POR BOLETO")
+}
+
+function exportarReporte114() {
+    var opciones = {
+        sistema: 'MOVIMIENTO OPERACIONAL DE FLOTA VEHICULAR',
+        title: 'MOVIMIENTO OPERACIONAL DE FLOTA VEHICULAR',
+        filename: 'MOVIMIENTO OPERACIONAL DE FLOTA VEHICULAR',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('#fecha-inicio-114').val(),
+    }
+    fnExcelReport("tbRP114", opciones, parametros, "MOVIMIENTO OPERACIONAL DE FLOTA VEHICULAR")
+}
+function exportarReporte115() {
+    var opciones = {
+        sistema: 'MAPEO OPERACIONAL UNIDAD',
+        title: 'MAPEO OPERACIONAL UNIDAD',
+        filename: 'MAPEO OPERACIONAL UNIDAD',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP115').val() + '|' + $('#busquedaFin115').val(),
+    }
+    fnExcelReport("tbRP115", opciones, parametros, "MAPEO OPERACIONAL UNIDAD")
+}
+
+function exportarReporte116() {
+    var opciones = {
+        sistema: 'MAPEO OPERACIONAL PERSONA',
+        title: 'MAPEO OPERACIONAL PERSONA',
+        filename: 'MAPEO OPERACIONAL PERSONA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP116').val() + '|' + $('#busquedaFin116').val(),
+    }
+    fnExcelReport("Rp116Imp", opciones, parametros, "MAPEO OPERACIONAL PERSONA")
+}
+
+function exportarReporte117() {
+    var opciones = {
+        sistema: 'MAPEO PRODUCCIÓN MENSUAL POR UNIDAD',
+        title: 'MAPEO PRODUCCIÓN MENSUAL POR UNIDAD',
+        filename: 'MAPEO PRODUCCIÓN MENSUAL POR UNIDAD',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP117').val() + ' al ' + $('#busquedaFin117').val(),
+    }
+
+    fnExcelReport("tbrp117", opciones, parametros, "MAPEO PRODUCCIÓN MENSUAL POR UNIDAD")
+}
+
+function exportarReporte118() {
+    var opciones = {
+        sistema: 'INGRESO DIARIO AGRUPADO',
+        title: 'INGRESO DIARIO AGRUPADO',
+        filename: 'INGRESO DIARIO AGRUPADO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: ($('.datetimeRP118').val() == $('#busquedaFin118').val() ? $('.datetimeRP118').val() : $('.datetimeRP118').val() + ' al ' + $('#busquedaFin118').val()),
+    }
+
+    fnExcelReport("tbrp118", opciones, parametros, "INGRESO DIARIO AGRUPADO")
+}
+
+function exportarReporte119() {
+    var opciones = {
+        sistema: 'REPORTE PRODUCCION POR HORA',
+        title: 'REPORTE PRODUCCION POR HORA',
+        filename: 'REPORTE PRODUCCION POR HORA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP119').val(),
+    }
+    fnExcelReport("tbrp119", opciones, parametros, 'REPORTE PRODUCCION POR HORA')
+}
+
+function exportarReporte120() {
+    var opciones = {
+        sistema: 'INDICADORES OPERACIONALES DIARIO',
+        title: 'INDICADORES OPERACIONALES DIARIO',
+        filename: 'INDICADORES OPERACIONALES DIARIO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP120').val(),
+    }
+    fnExcelReport("tbrp120", opciones, parametros, 'INDICADORES OPERACIONALES DIARIO')
+}
+
+function exportarReporte121() {
+    var opciones = {
+        sistema: 'MOVIMIENTO OPERACIONAL DE LA FLOTA VEHICULAR',
+        title: 'MOVIMIENTO OPERACIONAL DE LA FLOTA VEHICULAR',
+        filename: 'MOVIMIENTO OPERACIONAL DE LA FLOTA VEHICULAR',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP121').val(),
+    }
+    fnExcelReport("tbrp121", opciones, parametros, 'MOVIMIENTO OPERACIONAL DE LA FLOTA VEHICULAR')
+}
+
+function exportarReporte122() {
+    var opciones = {
+        sistema: 'VELOCIDAD PROMEDIO POR CONTROL',
+        title: 'VELOCIDAD PROMEDIO POR CONTROL',
+        filename: 'VELOCIDAD PROMEDIO POR CONTROL',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP122').val(),
+    }
+    fnExcelReport("tbrp122", opciones, parametros, 'VELOCIDAD PROMEDIO POR CONTROL')
+}
+
+function exportarReporte123() {
+    var opciones = {
+        sistema: 'REPORTE CONSOLIDADO MENSUAL DE VUELTAS',
+        title: 'REPORTE CONSOLIDADO MENSUAL DE VUELTAS',
+        filename: 'REPORTE CONSOLIDADO MENSUAL DE VUELTAS',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP123').val(),
+    }
+    fnExcelReport("tbrp123", opciones, parametros, 'REPORTE CONSOLIDADO MENSUAL DE VUELTAS')
+}
+
+function exportarReporte124() {
+    var opciones = {
+        sistema: 'OPERATIVIDAD VEHICULAR POR DÍA',
+        title: 'OPERATIVIDAD VEHICULAR POR DÍA',
+        filename: 'OPERATIVIDAD VEHICULAR POR DÍA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP124').val(),
+    }
+    fnExcelReport("tbrp124", opciones, parametros, 'OPERATIVIDAD VEHICULAR POR DÍA')
+}
+
+function exportarReporte126() {
+    var opciones = {
+        sistema: 'PRODUCCIÓN DIARIA',
+        title: 'PRODUCCIÓN DIARIA',
+        filename: 'PRODUCCIÓN DIARIA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP126').val(),
+    }
+    fnExcelReport("tbrp126", opciones, parametros, 'PRODUCCIÓN DIARIA')
+}
+
+function exportarReporte127() {
+    var opciones = {
+        sistema: 'VELOCIDAD PROMEDIO CONTROLES POR HORA',
+        title: 'VELOCIDAD PROMEDIO CONTROLES POR HORA',
+        filename: 'VELOCIDAD PROMEDIO CONTROLES POR HORA',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP122').val(),
+    }
+    fnExcelReport("tbrp127", opciones, parametros, 'VELOCIDAD PROMEDIO CONTROLES POR HORA')
+}
+
+function exportarReporte132(tabla = `tbRP132`) {
+    let checkCont = document.getElementById('checkContable').checked
+    tabla = checkCont ? `RP132Imp` : `tbRP132`
+    var opciones = {
+        sistema: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        title: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        filename: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP132').val(),
+    }
+    fnExcelReport(tabla, opciones, parametros, 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO')
+}
+
+function exportarReporte137(tabla = `RP137Imp`) {
+    var opciones = {
+        sistema: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        title: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        filename: 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO',
+        empresa: nomEmpresa,
+    }
+
+    var parametros = {
+        ruc: Ruc,
+        nomUsuario: NomUsuario,
+        fechaInicio: $('.datetimeRP137').val(),
+    }
+    fnExcelReport(tabla, opciones, parametros, 'REPORTE DE ANÁLISIS DE CUMPLIMIENTO PREDETERMINADO')
+}
+
+function ImprimirRP65() {
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'Producción Total de Flota',
+        fechaInicio: "",
+        usuario: NomUsuario,
+        reporte: 'RP65'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp65";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP82() {
+    var FechaInicio = $('.datetimeRP82').val();
+    var FechaFin = $('#busquedaFinRp82').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'Producción Total de Flota',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP82'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp82Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP83() {
+    var FechaInicio = $('.datetimeRP83').val();
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MAPEO OPERACIONAL UNIDAD',
+        fechaInicio: FechaInicio,
+        usuario: NomUsuario,
+        reporte: 'RP83'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp83Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP84() {
+    var FechaInicio = $('.datetimeRP84').val();
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'DEMANDA HORARIA BOLETO ELECTRÓNICO',
+        fechaInicio: FechaInicio,
+        usuario: NomUsuario,
+        reporte: 'RP84'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp84Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP86() {
+    var FechaInicio = $('.datetimeRP86').val();
+    var FechaFin = $('#busquedaFinRp86').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'DEMANDA HORARIA POR CONTROLES',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP86'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp86Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP95() {
+    var FechaInicio = $('.datetimeRP95').val();
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'PRODUCCIÓN VEHICULAR SEGÚN PUNTO Y HORA DE SALIDA',
+        fechaInicio: FechaInicio,
+        usuario: NomUsuario,
+        reporte: 'RP95'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp95Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP85() {
+    var FechaInicio = $('.datetimeRP85').val();
+    var FechaFin = $('#busquedaFin').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'Producción Detallada Boleto Electrónico',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP85'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp85Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP111() {
+    var FechaInicio = $('.datetimeRP111').val();
+    var FechaFin = $('#busquedaFinRp111').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'Producción Global por Fechas',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP111'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp111_2";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP112() {
+    var FechaInicio = $('.datetimeRP112').val();
+    var FechaFin = $('#busquedaFinRp112').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'PRODUCCIÓN VEHICULAR MENSUAL POR BOLETO',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP112'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp112Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+function ImprimirRP114() {
+    var FechaInicio = $('#fecha-inicio-114').val();
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MOVIMIENTO OPERACIONAL DE FLOTA VEHICULAR',
+        fechaInicio: FechaInicio,
+        usuario: NomUsuario,
+        reporte: 'RP114'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp114Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+function ImprimirRP115() {
+    var FechaInicio = $('.datetimeRP115').val();
+    var FechaFin = $('#busquedaFinRp115').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MAPEO OPERACIONAL UNIDAD',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP115'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbRP115";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP116() {
+    var FechaInicio = $('.datetimeRP116').val();
+    var FechaFin = $('#busquedaFinRp116').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MAPEO OPERACIONAL PERSONA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP116'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp116Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP117() {
+    var FechaInicio = $('.datetimeRP117').val();
+    var FechaFin = $('#busquedaFin117').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MAPEO PRODUCCIÓN MENSUAL POR UNIDAD',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP117'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp117Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '')
+}
+
+function ImprimirRP118() {
+    var FechaInicio = $('.datetimeRP118').val();
+    var FechaFin = $('#busquedaFin118').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'INGRESO DIARIO AGRUPADO',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP118'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "Rp118Imp";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP119() {
+    var FechaInicio = $('.datetimeRP119').val();
+    var FechaFin = $('.datetimeRP119').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'REPORTE PRODUCCION POR HORA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP119'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp119";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP120() {
+    var FechaInicio = $('.datetimeRP120').val();
+    var FechaFin = $('.datetimeRP120').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'REPORTE PRODUCCION POR HORA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP120'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp120";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP121() {
+    var FechaInicio = $('.datetimeRP121').val();
+    var FechaFin = $('.datetimeRP121').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'MOVIMIENTO OPERACIONAL DE LA FLOTA VEHICULAR',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP121'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp121";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP122() {
+    var FechaInicio = $('.datetimeRP122').val();
+    var FechaFin = $('.datetimeRP122').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'VELOCIDAD PROMEDIO POR CONTROL',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP122'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp122";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP123() {
+    var FechaInicio = $('.datetimeRP123').val();
+    var FechaFin = $('.datetimeRP123').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'REPORTE CONSOLIDADO MENSUAL DE VUELTAS',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP123'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp123";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP124() {
+    var FechaInicio = $('.datetimeRP124').val();
+    var FechaFin = $('.datetimeRP124').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'OPERATIVIDAD VEHICULAR POR DÍA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP124'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp124";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP126() {
+    var FechaInicio = $('.datetimeRP126').val();
+    var fecha = FechaInicio;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'PRODUCCIÓN DIARIA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP126'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp126";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function ImprimirRP127() {
+    var FechaInicio = $('.datetimeRP127').val();
+    var FechaFin = $('.datetimeRP127').val();
+    var fecha = FechaInicio + ' al ' + FechaFin;
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'VELOCIDAD PROMEDIO CONTROLES POR HORA',
+        fechaInicio: fecha,
+        usuario: NomUsuario,
+        reporte: 'RP127'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = "tbrp127";
+    ImprimirDocumento(tablaconsulta, parametros, opcionesCampo, '');
+}
+
+function Imprimir130(codRP) {
+    let diaConsulta = document.getElementById(`txtFechas${codRP}`)
+    var tablaconsulta = "";
+    parametros =
+    {
+        titulo: 'REPORTE DE SUBSIDIOS',
+        fecha: diaConsulta.value,
+        usuario: NomUsuario,
+        reporte: 'REPORTE DE SUBSIDIOS'
+    }
+
+    opcionesCampo = {
+        totalAgrupado: 0,
+    }
+    tablaconsulta = `tb${codRP}`;
+    ImprimirDocumentoModificado(tablaconsulta, parametros, opcionesCampo, '');
+}
+async function llenarSelectSituacion() {
+    var Url = NombreAplicacion + '/Unidad/ProcUnidad';
+    ProcUnidadA(Url, 0, '', '', 0, 0, 0, 0, '', 0, 0, 0, 0, '', 0, '', 0, '', '', '', '', '', 0, 0, '', 52);
+}
